@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Gradle wrapper launcher script (lightweight)
+DIR="$(cd "$(dirname "$0")" && pwd)"
+exec "$DIR/gradlew" "$@"
