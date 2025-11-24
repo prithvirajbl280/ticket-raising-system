@@ -13,12 +13,7 @@ class UserService(private val userRepository: UserRepository) {
 
     fun register(email: String, password: String, name: String?): User {
         if (userRepository.existsByEmail(email)) throw RuntimeException("Email already used")
-        val user = User(
-            email = email,
-            password = encoder.encode(password),
-            name = name,
-            roles = mutableSetOf(Role.ROLE_USER)
-        )
+        val user = User(email = email, password = encoder.encode(password), name = name, roles = mutableSetOf(Role.ROLE_USER))
         return userRepository.save(user)
     }
 
@@ -27,12 +22,6 @@ class UserService(private val userRepository: UserRepository) {
     fun findById(id: Long) = userRepository.findById(id)
 
     fun listAll() = userRepository.findAll()
-
-    fun findAgentsAndAdmins(): List<User> {
-        return userRepository.findAll().filter { user ->
-            user.roles.contains(Role.ROLE_AGENT) || user.roles.contains(Role.ROLE_ADMIN)
-        }
-    }
 
     fun save(user: User) = userRepository.save(user)
 
