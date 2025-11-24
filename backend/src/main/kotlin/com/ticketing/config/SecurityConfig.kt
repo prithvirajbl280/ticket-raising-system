@@ -20,15 +20,15 @@ class SecurityConfig(private val jwtFilter: JwtFilter) {
 
         http.csrf { it.disable() }
 
+        http.cors { it.configurationSource(corsConfig()) }
+
         http.sessionManagement {
             it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         }
 
-        http.cors { it.configurationSource(corsConfigurationSource()) }
-
         http.authorizeHttpRequests { auth ->
-            auth.requestMatchers("/api/auth/**").permitAll()
-            auth.requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+            auth.requestMatchers("/api/auth/**").permitAll()   // <-- REGISTER, LOGIN allowed
+            auth.requestMatchers("/error").permitAll()          // <-- prevents 403 fallback
             auth.anyRequest().authenticated()
         }
 
@@ -37,17 +37,17 @@ class SecurityConfig(private val jwtFilter: JwtFilter) {
         return http.build()
     }
 
+    // CORS ALLOW FRONTEND
     @Bean
-    fun corsConfigurationSource(): CorsConfigurationSource {
+    fun corsConfig(): CorsConfigurationSource {
         val config = CorsConfiguration()
-
         config.allowedOrigins = listOf(
             "https://frontend-production-f1dd.up.railway.app",
             "http://localhost:3000"
         )
-
         config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         config.allowedHeaders = listOf("*")
+        config.exposedHeaders = listOf("*")
         config.allowCredentials = true
 
         val source = UrlBasedCorsConfigurationSource()
