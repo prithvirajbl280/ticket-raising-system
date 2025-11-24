@@ -12,50 +12,39 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/tickets")
-class TicketController(
-    private val ticketService: TicketService,
-    private val userService: UserService
-) {
+class TicketController(private val ticketService: TicketService, private val userService: UserService) {
 
     private fun currentEmail(): String =
         SecurityContextHolder.getContext().authentication.principal as String
 
     @PostMapping
     fun create(@RequestBody dto: TicketDto): ResponseEntity<Ticket> {
-        val ticket = Ticket(
-            subject = dto.subject,
-            description = dto.description,
-            priority = Priority.valueOf(dto.priority)
-        )
+        val ticket = Ticket(subject = dto.subject, description = dto.description, priority = Priority.valueOf(dto.priority))
         val created = ticketService.createTicket(ticket, currentEmail())
         return ResponseEntity.ok(created)
     }
 
     @GetMapping
-    fun list(
-        @RequestParam(required = false) status: String?,
-        @RequestParam(required = false) priority: String?,
-        @RequestParam(required = false) search: String?
-    ): ResponseEntity<List<Ticket>> {
-        val tickets = ticketService.listTicketsForUser(currentEmail(), status, priority, search)
+    fun list(): ResponseEntity<List<Ticket>> {
+        val tickets = ticketService.listTicketsForUser(currentEmail())
         return ResponseEntity.ok(tickets)
     }
 
     @GetMapping("/{id}")
     fun get(@PathVariable id: Long): ResponseEntity<Ticket> {
-        val t = ticketService.getTicketForUser(id, currentEmail())
+        val t = ticketService.getTicket(id).orElseThrow { RuntimeException("Not found") }
         return ResponseEntity.ok(t)
     }
 
     @PutMapping("/{id}/assign")
     fun assign(@PathVariable id: Long, @RequestParam assigneeId: Long): ResponseEntity<Ticket> {
-        val updated = ticketService.assignTicketByUser(id, assigneeId, currentEmail())
+        val updated = ticketService.assignTicket(id, assigneeId)
         return ResponseEntity.ok(updated)
     }
 
     @PutMapping("/{id}/status")
     fun changeStatus(@PathVariable id: Long, @RequestParam status: String): ResponseEntity<Ticket> {
-        val updated = ticketService.changeStatusByUser(id, Status.valueOf(status), currentEmail())
+        val updated = ticketService.changeStatus(id, Status.valueOf(status))
         return ResponseEntity.ok(updated)
     }
 }
