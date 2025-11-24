@@ -19,33 +19,23 @@ class SecurityConfig(private val jwtFilter: JwtFilter) {
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
 
         http.csrf { it.disable() }
-
         http.cors { it.configurationSource(corsConfig()) }
 
         http.sessionManagement {
             it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         }
 
-        // http.authorizeHttpRequests { auth ->
-        //     auth.requestMatchers("/api/auth/**").permitAll()   // <-- REGISTER, LOGIN allowed
-        //     auth.requestMatchers("/error").permitAll()          // <-- prevents 403 fallback
-        //     auth.anyRequest().authenticated()
-        // }
-
         http.authorizeHttpRequests { auth ->
-                auth.requestMatchers("/auth/**").permitAll()       // <-- allow register/login
-                auth.requestMatchers("/api/auth/**").permitAll()   // <-- if used anywhere
-                auth.requestMatchers("/error").permitAll()
-                auth.anyRequest().authenticated()
+            auth.requestMatchers("/api/auth/**").permitAll()   // register & login allowed
+            auth.requestMatchers("/error").permitAll()
+            auth.anyRequest().authenticated()
         }
-
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
     }
 
-    // CORS ALLOW FRONTEND
     @Bean
     fun corsConfig(): CorsConfigurationSource {
         val config = CorsConfiguration()
@@ -55,7 +45,7 @@ class SecurityConfig(private val jwtFilter: JwtFilter) {
         )
         config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         config.allowedHeaders = listOf("*")
-        config.exposedHeaders = listOf("*")
+        config.exposedHeaders = listOf("Authorization", "Content-Type")
         config.allowCredentials = true
 
         val source = UrlBasedCorsConfigurationSource()
