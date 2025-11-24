@@ -16,7 +16,7 @@ class CorsConfig {
                         "https://frontend-production-f1dd.up.railway.app",
                         "http://localhost:3000"
                     )
-                    .allowedMethods("*")
+                    .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                     .allowedHeaders("*")
                     .allowCredentials(true)
             }
