@@ -26,11 +26,19 @@ class SecurityConfig(private val jwtFilter: JwtFilter) {
             it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         }
 
+        // http.authorizeHttpRequests { auth ->
+        //     auth.requestMatchers("/api/auth/**").permitAll()   // <-- REGISTER, LOGIN allowed
+        //     auth.requestMatchers("/error").permitAll()          // <-- prevents 403 fallback
+        //     auth.anyRequest().authenticated()
+        // }
+
         http.authorizeHttpRequests { auth ->
-            auth.requestMatchers("/api/auth/**").permitAll()   // <-- REGISTER, LOGIN allowed
-            auth.requestMatchers("/error").permitAll()          // <-- prevents 403 fallback
-            auth.anyRequest().authenticated()
+                auth.requestMatchers("/auth/**").permitAll()       // <-- allow register/login
+                auth.requestMatchers("/api/auth/**").permitAll()   // <-- if used anywhere
+                auth.requestMatchers("/error").permitAll()
+                auth.anyRequest().authenticated()
         }
+
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter::class.java)
 
