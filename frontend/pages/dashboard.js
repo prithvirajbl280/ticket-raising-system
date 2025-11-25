@@ -172,7 +172,7 @@ export default function Dashboard() {
             {isAdmin ? "Admin Dashboard" : isAgent ? "Agent Dashboard" : "My Tickets"}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Logged in as: {displayPerson(user) || user.email} ({userRoles.join(", ")})
+            Logged in as: {user.name || user.email} ({userRoles.join(", ")})
           </p>
         </div>
 
@@ -283,15 +283,14 @@ export default function Dashboard() {
           {tickets.map((t) => (
             <div
               key={t.id}
-              className={`p-5 border rounded-lg shadow transition hover:shadow-lg ${
-                t.status === "OPEN"
+              className={`p-5 border rounded-lg shadow transition hover:shadow-lg ${t.status === "OPEN"
                   ? "bg-green-50 border-green-200"
                   : t.status === "IN_PROGRESS"
-                  ? "bg-blue-50 border-blue-200"
-                  : t.status === "RESOLVED"
-                  ? "bg-yellow-50 border-yellow-200"
-                  : "bg-gray-100 border-gray-300"
-              }`}
+                    ? "bg-blue-50 border-blue-200"
+                    : t.status === "RESOLVED"
+                      ? "bg-yellow-50 border-yellow-200"
+                      : "bg-gray-100 border-gray-300"
+                }`}
             >
               <button
                 onClick={() => router.push(`/ticket/${t.id}`)}
@@ -302,29 +301,27 @@ export default function Dashboard() {
 
               <div className="text-sm mb-3">
                 <span
-                  className={`inline-block px-2 py-1 rounded text-xs font-semibold mr-2 ${
-                    t.status === "OPEN"
+                  className={`inline-block px-2 py-1 rounded text-xs font-semibold mr-2 ${t.status === "OPEN"
                       ? "bg-green-200 text-green-900"
                       : t.status === "IN_PROGRESS"
-                      ? "bg-blue-200 text-blue-900"
-                      : t.status === "RESOLVED"
-                      ? "bg-yellow-200 text-yellow-900"
-                      : "bg-gray-300 text-gray-900"
-                  }`}
+                        ? "bg-blue-200 text-blue-900"
+                        : t.status === "RESOLVED"
+                          ? "bg-yellow-200 text-yellow-900"
+                          : "bg-gray-300 text-gray-900"
+                    }`}
                 >
                   {t.status.replace("_", " ")}
                 </span>
 
                 <span
-                  className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                    t.priority === "URGENT"
+                  className={`inline-block px-2 py-1 rounded text-xs font-semibold ${t.priority === "URGENT"
                       ? "bg-red-200 text-red-900"
                       : t.priority === "HIGH"
-                      ? "bg-orange-200 text-orange-900"
-                      : t.priority === "MEDIUM"
-                      ? "bg-yellow-200 text-yellow-900"
-                      : "bg-gray-200 text-gray-900"
-                  }`}
+                        ? "bg-orange-200 text-orange-900"
+                        : t.priority === "MEDIUM"
+                          ? "bg-yellow-200 text-yellow-900"
+                          : "bg-gray-200 text-gray-900"
+                    }`}
                 >
                   {t.priority}
                 </span>
@@ -405,9 +402,8 @@ export default function Dashboard() {
                         </div>
 
                         <div className="text-right">
-                          <div className={`text-lg font-bold ${
-                            agent.activeTickets === 0 ? "text-green-600" : agent.activeTickets < 5 ? "text-yellow-600" : "text-red-600"
-                          }`}>
+                          <div className={`text-lg font-bold ${agent.activeTickets === 0 ? "text-green-600" : agent.activeTickets < 5 ? "text-yellow-600" : "text-red-600"
+                            }`}>
                             {agent.activeTickets}
                           </div>
                           <div className="text-xs text-gray-500">active tickets</div>
