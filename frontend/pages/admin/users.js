@@ -8,9 +8,14 @@ export default function AdminUsers() {
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-        if (!token) router.push('/');
+        if (!token) {
+            router.push('/');
+            return;
+        }
+        
         const user = JSON.parse(localStorage.getItem('user'));
-        if (!user?.roles?.some(r => r.name === 'ROLE_ADMIN')) {
+        // Fixed: roles is an array of strings, not objects
+        if (!user?.roles?.includes('ROLE_ADMIN')) {
             alert("Access Denied");
             router.push('/dashboard');
             return;
@@ -61,7 +66,10 @@ export default function AdminUsers() {
                                 <td className="py-2 px-4 border-b text-center">{u.id}</td>
                                 <td className="py-2 px-4 border-b">{u.email}</td>
                                 <td className="py-2 px-4 border-b">{u.name || "-"}</td>
-                                <td className="py-2 px-4 border-b">{u.roles.map(r => r.name).join(", ")}</td>
+                                <td className="py-2 px-4 border-b">
+                                    {/* Fixed: roles is already an array of strings */}
+                                    {Array.isArray(u.roles) ? u.roles.join(", ") : "No roles"}
+                                </td>
                                 <td className="py-2 px-4 border-b text-center">
                                     <button className="bg-red-500 text-white px-2 py-1 rounded text-sm" onClick={() => deleteUser(u.id)}>Delete</button>
                                 </td>
