@@ -9,6 +9,7 @@ import com.ticketing.service.UserService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import org.springframework.security.access.prepost.PreAuthorize
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -19,14 +20,22 @@ class TicketController(private val ticketService: TicketService, private val use
 
     @PostMapping
     fun create(@RequestBody dto: TicketDto): ResponseEntity<Ticket> {
-        val ticket = Ticket(subject = dto.subject, description = dto.description, priority = Priority.valueOf(dto.priority))
+        val ticket = Ticket(
+            subject = dto.subject, 
+            description = dto.description, 
+            priority = Priority.valueOf(dto.priority),
+            category = com.ticketing.model.Category.valueOf(dto.category)
+        )
         val created = ticketService.createTicket(ticket, currentEmail())
         return ResponseEntity.ok(created)
     }
 
     @GetMapping
-    fun list(): ResponseEntity<List<Ticket>> {
-        val tickets = ticketService.listTicketsForUser(currentEmail())
+    fun list(
+        @RequestParam(required = false) search: String?,
+        @RequestParam(required = false) status: String?
+    ): ResponseEntity<List<Ticket>> {
+        val tickets = ticketService.searchTickets(currentEmail(), search, status)
         return ResponseEntity.ok(tickets)
     }
 
@@ -37,12 +46,14 @@ class TicketController(private val ticketService: TicketService, private val use
     }
 
     @PutMapping("/{id}/assign")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     fun assign(@PathVariable id: Long, @RequestParam assigneeId: Long): ResponseEntity<Ticket> {
         val updated = ticketService.assignTicket(id, assigneeId)
         return ResponseEntity.ok(updated)
     }
 
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'AGENT')")
     fun changeStatus(@PathVariable id: Long, @RequestParam status: String): ResponseEntity<Ticket> {
         val updated = ticketService.changeStatus(id, Status.valueOf(status))
         return ResponseEntity.ok(updated)
