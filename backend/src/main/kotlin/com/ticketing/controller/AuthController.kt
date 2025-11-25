@@ -19,7 +19,7 @@ class AuthController(private val userService: UserService, private val jwtUtil: 
     fun register(@RequestBody req: AuthRequest): ResponseEntity<Any> {
         val user = userService.register(req.email, req.password, req.name)
         val token = jwtUtil.generateToken(user.email, user.roles)
-        return ResponseEntity.ok(AuthResponse(token, user.email, user.roles.map { it.name }))
+        return ResponseEntity.ok(AuthResponse(token, user.email, user.roles.map { it.name }, user.name))
     }
 
     @PostMapping("/login")
@@ -27,7 +27,7 @@ class AuthController(private val userService: UserService, private val jwtUtil: 
         val user = userService.findByEmail(req.email).orElseThrow { RuntimeException("Invalid credentials") }
         if (!encoder.matches(req.password, user.password)) throw RuntimeException("Invalid credentials")
         val token = jwtUtil.generateToken(user.email, user.roles)
-        return ResponseEntity.ok(AuthResponse(token, user.email, user.roles.map { it.name }))
+        return ResponseEntity.ok(AuthResponse(token, user.email, user.roles.map { it.name }, user.name))
     }
 
     @PostMapping("/forgot-password")
