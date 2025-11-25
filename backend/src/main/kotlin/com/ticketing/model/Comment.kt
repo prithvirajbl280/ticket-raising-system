@@ -15,6 +15,7 @@ data class Comment(
     var author: User? = null,
 
     @ManyToOne
+    @com.fasterxml.jackson.annotation.JsonIgnore
     var ticket: Ticket? = null,
 
     var createdAt: Instant = Instant.now()
