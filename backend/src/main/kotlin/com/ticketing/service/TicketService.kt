@@ -16,10 +16,14 @@ class TicketService(
     private val commentRepository: CommentRepository,
     private val emailService: EmailService
 ) {
+
     fun createTicket(ticket: Ticket, ownerEmail: String): Ticket {
-        val owner = userRepository.findByEmail(ownerEmail).orElseThrow { RuntimeException("User not found") }
+        val owner = userRepository.findByEmail(ownerEmail)
+            .orElseThrow { RuntimeException("User not found") }
+
         ticket.owner = owner
         ticket.createdAt = java.time.Instant.now()
+
         val saved = ticketRepository.save(ticket)
         emailService.sendTicketCreatedNotification(owner.email, saved.id, saved.subject)
         return saved
@@ -28,134 +32,120 @@ class TicketService(
     fun getTicket(id: Long): Optional<Ticket> = ticketRepository.findById(id)
 
     /**
-     * Search tickets:
-     * - Admin: all tickets
-     * - Agent: assigned to them OR unassigned
-     * - User: only their tickets
+     * ✔ ADMIN → all tickets
+     * ✔ AGENT → only assigned tickets
+     * ✔ USER → only their own tickets
      *
-     * Search is applied only when query length >= 2 to avoid "a" matching everything.
-     * If no predicates are added (no RBAC limit, no status, no search) we return ticketRepository.findAll()
-     * to avoid building an empty "and()" predicate which may be ambiguous.
+     * ✔ Search works correctly for all roles
      */
     fun searchTickets(email: String, query: String?, status: String?): List<Ticket> {
-        val user = userRepository.findByEmail(email).orElseThrow { RuntimeException("User not found") }
+        val user = userRepository.findByEmail(email)
+            .orElseThrow { RuntimeException("User not found") }
 
-        // Normalize query
         val trimmedQuery = query?.trim()
-        val useSearch = !trimmedQuery.isNullOrBlank() && trimmedQuery.length >= 2
+        val useSearch = !trimmedQuery.isNullOrBlank()
+
+        val isAdmin = user.roles.contains(Role.ROLE_ADMIN)
+        val isAgent = user.roles.contains(Role.ROLE_AGENT)
+        val isUser = user.roles.contains(Role.ROLE_USER)
 
         val spec = Specification<Ticket> { root, _, cb ->
             val predicates = mutableListOf<Predicate>()
 
-            // RBAC Filter
-            val isAdmin = user.roles.any { it.name == Role.ROLE_ADMIN.name }
-            val isAgent = user.roles.any { it.name == Role.ROLE_AGENT.name }
-
-            if (!isAdmin) {
-                if (isAgent) {
-                    // Agents see tickets assigned to them OR unassigned tickets
-                    // Note: use equality on assignee.id and also allow NULL assignee
+            // ROLE FILTERING
+            when {
+                isAdmin -> {
+                    // NO FILTER → Admin sees everything
+                }
+                isAgent -> {
                     predicates.add(
-                        cb.or(
-                            cb.equal(root.get<User>("assignee").get<Long>("id"), user.id)
+                        cb.equal(
+                            root.get<User>("assignee").get<Long>("id"),
+                            user.id
                         )
                     )
-                } else {
-                    // Regular users see only their own tickets
-                    predicates.add(cb.equal(root.get<User>("owner").get<Long>("id"), user.id))
+                }
+                else -> { // Regular User
+                    predicates.add(
+                        cb.equal(
+                            root.get<User>("owner").get<Long>("id"),
+                            user.id
+                        )
+                    )
                 }
             }
-            // Admins see ALL tickets (no RBAC predicate)
 
-            // Status Filter
+            // STATUS FILTER
             if (!status.isNullOrBlank() && status != "ALL") {
                 try {
-                    predicates.add(cb.equal(root.get<Status>("status"), Status.valueOf(status)))
-                } catch (e: IllegalArgumentException) {
-                    // ignore invalid status
-                }
+                    predicates.add(
+                        cb.equal(
+                            root.get<Status>("status"),
+                            Status.valueOf(status)
+                        )
+                    )
+                } catch (_: IllegalArgumentException) { }
             }
 
-            // Search Query (only for meaningful queries)
+            // SEARCH FILTER (subject + description)
             if (useSearch) {
-                val likePattern = "%${trimmedQuery!!.lowercase()}%"
+                val like = "%${trimmedQuery!!.lowercase()}%"
                 predicates.add(
                     cb.or(
-                        cb.like(cb.lower(root.get("subject")), likePattern),
-                        cb.like(cb.lower(root.get("description")), likePattern)
+                        cb.like(cb.lower(root.get("subject")), like),
+                        cb.like(cb.lower(root.get("description")), like)
                     )
                 )
             }
 
-            // If no predicates were added, return null so we handle this case outside (see below).
-            if (predicates.isEmpty()) {
-                null
-            } else {
-                cb.and(*predicates.toTypedArray())
-            }
+            cb.and(*predicates.toTypedArray())
         }
 
-        // If spec would be null (no predicates), return all tickets (admin) or appropriate default.
-        // ticketRepository.findAll(null) would throw, so handle explicitly.
-        val hasAnyFilter = run {
-            // RBAC: if not admin, there is a filter because user or agent predicates were added
-            val isAdmin = user.roles.any { it.name == Role.ROLE_ADMIN.name }
-            if (!isAdmin) return@run true
-            // admin + status/filter/search?
-            val statusProvided = !status.isNullOrBlank() && status != "ALL"
-            val searchProvided = !trimmedQuery.isNullOrBlank() && trimmedQuery.length >= 2
-            statusProvided || searchProvided
-        }
-
-        val result = if (!hasAnyFilter) {
-            // Admin with no filters -> return everything
-            ticketRepository.findAll()
-        } else {
-            // When specification is not null, run findAll(spec) and ensure unique results
-            val raw = ticketRepository.findAll(spec)
-            // Defensive dedupe (in case joins caused duplicates)
-            raw.distinctBy { it.id }
-        }
-
-        return result
+        val results = ticketRepository.findAll(spec)
+        return results.distinctBy { it.id }
     }
 
     fun assignTicket(ticketId: Long, assigneeId: Long): Ticket {
-        val ticket = ticketRepository.findById(ticketId).orElseThrow { RuntimeException("Ticket not found") }
-        val assignee = userRepository.findById(assigneeId).orElseThrow { RuntimeException("Assignee not found") }
+        val ticket = ticketRepository.findById(ticketId)
+            .orElseThrow { RuntimeException("Ticket not found") }
+
+        val assignee = userRepository.findById(assigneeId)
+            .orElseThrow { RuntimeException("User not found") }
+
         ticket.assignee = assignee
         val saved = ticketRepository.save(ticket)
+
         emailService.sendTicketAssignedNotification(assignee.email, saved.id)
         return saved
     }
 
     fun changeStatus(ticketId: Long, status: Status): Ticket {
-        val ticket = ticketRepository.findById(ticketId).orElseThrow { RuntimeException("Ticket not found") }
+        val ticket = ticketRepository.findById(ticketId)
+            .orElseThrow { RuntimeException("Ticket not found") }
+
         ticket.status = status
         val saved = ticketRepository.save(ticket)
-        ticket.owner?.email?.let { emailService.sendTicketStatusChangeNotification(it, saved.id, status.name) }
+
+        ticket.owner?.email?.let {
+            emailService.sendTicketStatusChangeNotification(it, saved.id, status.name)
+        }
+
         return saved
     }
 
-    /**
-     * Add comment:
-     * - Save the comment entity. No need to save the ticket again (this could cause side-effects).
-     */
     fun addComment(ticketId: Long, authorEmail: String, text: String) {
-        val ticket = ticketRepository.findById(ticketId).orElseThrow { RuntimeException("Ticket not found") }
-        val author = userRepository.findByEmail(authorEmail).orElseThrow { RuntimeException("User not found") }
+        val ticket = ticketRepository.findById(ticketId)
+            .orElseThrow { RuntimeException("Ticket not found") }
+
+        val author = userRepository.findByEmail(authorEmail)
+            .orElseThrow { RuntimeException("User not found") }
+
         val comment = Comment(text = text, author = author, ticket = ticket)
         commentRepository.save(comment)
-        // Do NOT call ticketRepository.save(ticket) here — commentRepository.save will persist the relation.
     }
 
-    /**
-     * Count active tickets (OPEN or IN_PROGRESS) assigned to a specific agent
-     */
     fun countActiveTicketsForAgent(agentId: Long): Int {
-        val tickets = ticketRepository.findByAssigneeId(agentId)
-        return tickets.count { ticket ->
-            ticket.status == Status.OPEN || ticket.status == Status.IN_PROGRESS
-        }
+        return ticketRepository.findByAssigneeId(agentId)
+            .count { it.status == Status.OPEN || it.status == Status.IN_PROGRESS }
     }
 }
