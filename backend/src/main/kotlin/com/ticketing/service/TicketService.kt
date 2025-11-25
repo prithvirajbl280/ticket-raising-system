@@ -33,7 +33,7 @@ class TicketService(
         val spec = Specification<Ticket> { root, _, cb ->
             val predicates = mutableListOf<Predicate>()
             
-            // RBAC Filter - FIXED LOGIC
+            // RBAC Filter
             val isAdmin = user.roles.any { it.name == Role.ROLE_ADMIN.name }
             val isAgent = user.roles.any { it.name == Role.ROLE_AGENT.name }
             
@@ -62,7 +62,7 @@ class TicketService(
                 }
             }
 
-            // Search Query - search in subject and description
+            // Search Query
             if (!query.isNullOrBlank()) {
                 val likePattern = "%${query.lowercase()}%"
                 predicates.add(cb.or(
@@ -101,5 +101,16 @@ class TicketService(
         ticket.comments.add(comment)
         commentRepository.save(comment)
         ticketRepository.save(ticket)
+    }
+
+    /**
+     * Count active tickets (OPEN or IN_PROGRESS) assigned to a specific agent
+     * This is used by admins to see agent workload when assigning tickets
+     */
+    fun countActiveTicketsForAgent(agentId: Long): Int {
+        val tickets = ticketRepository.findByAssigneeId(agentId)
+        return tickets.count { ticket ->
+            ticket.status == Status.OPEN || ticket.status == Status.IN_PROGRESS
+        }
     }
 }
