@@ -30,8 +30,6 @@ export default function Dashboard() {
       setTickets(res.data);
     } catch (err) {
       alert("Unable to fetch tickets");
-
-
     }
   };
 
@@ -66,14 +64,17 @@ export default function Dashboard() {
     }
   };
 
+  // Fixed: roles is array of strings, not objects
+  const isAdmin = user?.roles?.includes('ROLE_ADMIN');
+  const isAgent = user?.roles?.includes('ROLE_AGENT');
+
   return (
     <div className="p-6">
       <h1 className="text-2xl">My Tickets</h1>
       <div className="flex gap-2">
-        {user?.roles?.some(r => r.name === 'ROLE_ADMIN') && <button className="bg-green-600 text-white px-3 py-1 rounded" onClick={() => router.push('/admin/users')}>Manage Users</button>}
+        {isAdmin && <button className="bg-green-600 text-white px-3 py-1 rounded" onClick={() => router.push('/admin/users')}>Manage Users</button>}
         <button className="bg-gray-200 px-3 py-1 rounded" onClick={() => { localStorage.removeItem('token'); router.push('/'); }}>Logout</button>
       </div>
-
 
       <div className="mb-4 flex gap-2">
         <input placeholder="Search tickets..." value={search} onChange={e => setSearch(e.target.value)} className="p-2 border rounded flex-grow" />
@@ -93,8 +94,6 @@ export default function Dashboard() {
         <select value={priority} onChange={e => setPriority(e.target.value)} className="p-2 mb-2 border rounded">
           <option value="LOW">LOW</option>
           <option value="MEDIUM">MEDIUM</option>
-          <option value="HIGH">HIGH</option>
-          <option value="URGENT">URGENT</option>
           <option value="HIGH">HIGH</option>
           <option value="URGENT">URGENT</option>
         </select>
@@ -120,7 +119,7 @@ export default function Dashboard() {
             <div className="mt-2 text-xs text-gray-500">Owner: {t.owner?.email} • Assignee: {t.assignee?.email || "Unassigned"}</div>
 
             <div className="mt-3 flex gap-2">
-              {(user?.roles?.some(r => r.name === 'ROLE_ADMIN' || r.name === 'ROLE_AGENT')) && (
+              {(isAdmin || isAgent) && (
                 <select
                   value={t.status}
                   onChange={(e) => updateStatus(t.id, e.target.value)}
@@ -132,7 +131,7 @@ export default function Dashboard() {
                   <option value="CLOSED">CLOSED</option>
                 </select>
               )}
-              {user?.roles?.some(r => r.name === 'ROLE_ADMIN') && (
+              {isAdmin && (
                 <button onClick={() => assignTicket(t.id)} className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
                   Assign
                 </button>
@@ -141,6 +140,6 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
-    </div >
+    </div>
   );
 }
