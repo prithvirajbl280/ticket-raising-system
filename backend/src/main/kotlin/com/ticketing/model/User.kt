@@ -14,7 +14,7 @@ data class User(
     var email: String = "",
 
     @Column(nullable = false)
-    @JsonIgnore  // Never send password to frontend
+    @JsonIgnore  // Never send password to frontend..
     var password: String = "",
 
     var name: String? = null,
