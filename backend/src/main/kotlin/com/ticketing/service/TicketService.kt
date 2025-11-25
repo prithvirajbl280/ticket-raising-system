@@ -17,6 +17,9 @@ class TicketService(
     private val emailService: EmailService
 ) {
 
+    // --------------------------------------------------------------------------------------
+    // CREATE TICKET
+    // --------------------------------------------------------------------------------------
     fun createTicket(ticket: Ticket, ownerEmail: String): Ticket {
         val owner = userRepository.findByEmail(ownerEmail)
             .orElseThrow { RuntimeException("User not found") }
@@ -29,14 +32,19 @@ class TicketService(
         return saved
     }
 
+    // --------------------------------------------------------------------------------------
+    // GET TICKET BY ID
+    // --------------------------------------------------------------------------------------
     fun getTicket(id: Long): Optional<Ticket> = ticketRepository.findById(id)
 
+    // --------------------------------------------------------------------------------------
+    // SEARCH + ROLE FILTERING
+    // --------------------------------------------------------------------------------------
     /**
-     * ✔ ADMIN → all tickets
-     * ✔ AGENT → only assigned tickets
-     * ✔ USER → only their own tickets
-     *
-     * ✔ Search works correctly for all roles
+     * ✔ ADMIN → all tickets  
+     * ✔ AGENT → only assigned tickets  
+     * ✔ USER → only their own tickets  
+     * ✔ Search works perfectly for all roles  
      */
     fun searchTickets(email: String, query: String?, status: String?): List<Ticket> {
         val user = userRepository.findByEmail(email)
@@ -52,12 +60,15 @@ class TicketService(
         val spec = Specification<Ticket> { root, _, cb ->
             val predicates = mutableListOf<Predicate>()
 
-            // ROLE FILTERING
+            // ----------------------------------------------------------------------------------
+            // ROLE-BASED VISIBILITY
+            // ----------------------------------------------------------------------------------
             when {
                 isAdmin -> {
-                    // NO FILTER → Admin sees everything
+                    // Admin → no RBAC restriction
                 }
                 isAgent -> {
+                    // Agent → only tickets assigned to them
                     predicates.add(
                         cb.equal(
                             root.get<User>("assignee").get<Long>("id"),
@@ -65,7 +76,8 @@ class TicketService(
                         )
                     )
                 }
-                else -> { // Regular User
+                isUser -> {
+                    // Normal user → only their own tickets
                     predicates.add(
                         cb.equal(
                             root.get<User>("owner").get<Long>("id"),
@@ -75,19 +87,20 @@ class TicketService(
                 }
             }
 
+            // ----------------------------------------------------------------------------------
             // STATUS FILTER
+            // ----------------------------------------------------------------------------------
             if (!status.isNullOrBlank() && status != "ALL") {
                 try {
                     predicates.add(
-                        cb.equal(
-                            root.get<Status>("status"),
-                            Status.valueOf(status)
-                        )
+                        cb.equal(root.get<Status>("status"), Status.valueOf(status))
                     )
                 } catch (_: IllegalArgumentException) { }
             }
 
-            // SEARCH FILTER (subject + description)
+            // ----------------------------------------------------------------------------------
+            // SEARCH FILTER
+            // ----------------------------------------------------------------------------------
             if (useSearch) {
                 val like = "%${trimmedQuery!!.lowercase()}%"
                 predicates.add(
@@ -101,10 +114,12 @@ class TicketService(
             cb.and(*predicates.toTypedArray())
         }
 
-        val results = ticketRepository.findAll(spec)
-        return results.distinctBy { it.id }
+        return ticketRepository.findAll(spec).distinctBy { it.id }
     }
 
+    // --------------------------------------------------------------------------------------
+    // ASSIGN TICKET
+    // --------------------------------------------------------------------------------------
     fun assignTicket(ticketId: Long, assigneeId: Long): Ticket {
         val ticket = ticketRepository.findById(ticketId)
             .orElseThrow { RuntimeException("Ticket not found") }
@@ -119,6 +134,9 @@ class TicketService(
         return saved
     }
 
+    // --------------------------------------------------------------------------------------
+    // CHANGE STATUS
+    // --------------------------------------------------------------------------------------
     fun changeStatus(ticketId: Long, status: Status): Ticket {
         val ticket = ticketRepository.findById(ticketId)
             .orElseThrow { RuntimeException("Ticket not found") }
@@ -133,6 +151,9 @@ class TicketService(
         return saved
     }
 
+    // --------------------------------------------------------------------------------------
+    // ADD COMMENT (NO SIDE EFFECTS)
+    // --------------------------------------------------------------------------------------
     fun addComment(ticketId: Long, authorEmail: String, text: String) {
         val ticket = ticketRepository.findById(ticketId)
             .orElseThrow { RuntimeException("Ticket not found") }
@@ -144,6 +165,9 @@ class TicketService(
         commentRepository.save(comment)
     }
 
+    // --------------------------------------------------------------------------------------
+    // COUNT ACTIVE TICKETS FOR AGENT
+    // --------------------------------------------------------------------------------------
     fun countActiveTicketsForAgent(agentId: Long): Int {
         return ticketRepository.findByAssigneeId(agentId)
             .count { it.status == Status.OPEN || it.status == Status.IN_PROGRESS }
