@@ -19,6 +19,7 @@ export default function Dashboard() {
 
   const router = useRouter();
 
+  // Load user from localStorage on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -32,9 +33,7 @@ export default function Dashboard() {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
-        parsedUser.roles = Array.isArray(parsedUser.roles)
-          ? parsedUser.roles
-          : [];
+        parsedUser.roles = Array.isArray(parsedUser.roles) ? parsedUser.roles : [];
         setUser(parsedUser);
       }
     } catch (e) {
@@ -44,19 +43,26 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Fetch tickets when user or filters change
   useEffect(() => {
     if (!user) return;
     fetchTickets();
   }, [user, search, statusFilter]);
 
+  // Build query only if filter values are meaningful
+  const buildTicketsUrl = () => {
+    const params = new URLSearchParams();
+    if (search && search.trim().length > 0) params.append("search", search.trim());
+    if (statusFilter && statusFilter !== "" && statusFilter !== "ALL")
+      params.append("status", statusFilter);
+    const query = params.toString();
+    return `/tickets${query ? "?" + query : ""}`;
+  };
+
   const fetchTickets = async () => {
     try {
-      const params = new URLSearchParams();
-      if (search.trim()) params.append("search", search.trim());
-      if (statusFilter && statusFilter !== "ALL")
-        params.append("status", statusFilter);
-
-      const res = await API.get(`/tickets?${params.toString()}`);
+      const url = buildTicketsUrl();
+      const res = await API.get(url);
       setTickets(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Unable to fetch tickets:", err);
@@ -71,7 +77,9 @@ export default function Dashboard() {
       const res = await API.get("/admin/agents");
       setAgents(res.data || []);
     } catch (err) {
+      console.error("Failed to load agents", err);
       alert("Failed to load agents");
+      setAgents([]);
     } finally {
       setLoadingAgents(false);
     }
@@ -91,13 +99,11 @@ export default function Dashboard() {
 
   const assignTicketToAgent = async (agentId) => {
     try {
-      await API.put(
-        `/tickets/${selectedTicketId}/assign?assigneeId=${agentId}`
-      );
-      alert("Ticket assigned successfully!");
+      await API.put(`/tickets/${selectedTicketId}/assign?assigneeId=${agentId}`);
       closeAssignModal();
       fetchTickets();
     } catch (err) {
+      console.error("Assign error:", err);
       alert("Failed to assign ticket");
     }
   };
@@ -107,46 +113,55 @@ export default function Dashboard() {
       await API.put(`/tickets/${id}/status?status=${newStatus}`);
       fetchTickets();
     } catch (err) {
+      console.error("Status update error:", err);
       alert("Failed to update status");
     }
   };
 
   const createTicket = async (e) => {
     e.preventDefault();
+    if (!subject.trim() || !description.trim()) {
+      alert("Subject and description are required");
+      return;
+    }
     try {
-      await API.post("/tickets", {
-        subject,
-        description,
-        priority,
-        category,
-      });
+      await API.post("/tickets", { subject, description, priority, category });
       setSubject("");
       setDescription("");
       setPriority("MEDIUM");
       setCategory("OTHER");
+      // refresh so the user's new ticket appears immediately
+      await fetchTickets();
       alert("Ticket created!");
-      fetchTickets();
     } catch (err) {
+      console.error("Create ticket error:", err);
       alert("Failed to create ticket");
     }
   };
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     router.push("/");
   };
 
   const userRoles = Array.isArray(user?.roles) ? user.roles : [];
   const isAdmin = userRoles.includes("ROLE_ADMIN");
   const isAgent = userRoles.includes("ROLE_AGENT");
-  const isUserOnly = userRoles.includes("ROLE_USER");
+  const isUserOnly = userRoles.includes("ROLE_USER") && !isAgent && !isAdmin;
 
   if (!user)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        Loading...
+        <div>Loading...</div>
       </div>
     );
+
+  // Helper to display name or fallback to email
+  const displayPerson = (person) => {
+    if (!person) return null;
+    return person.name || person.email || null;
+  };
 
   return (
     <div className="p-6">
@@ -154,14 +169,10 @@ export default function Dashboard() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">
-            {isAdmin
-              ? "Admin Dashboard"
-              : isAgent
-              ? "Agent Dashboard"
-              : "My Tickets"}
+            {isAdmin ? "Admin Dashboard" : isAgent ? "Agent Dashboard" : "My Tickets"}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Logged in as: {user.email} ({userRoles.join(", ")})
+            Logged in as: {displayPerson(user) || user.email} ({userRoles.join(", ")})
           </p>
         </div>
 
@@ -187,7 +198,7 @@ export default function Dashboard() {
       {/* Search + Filters */}
       <div className="mb-6 flex gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
         <input
-          placeholder="Search tickets..."
+          placeholder="Search tickets by subject or description..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="p-2 border rounded flex-grow"
@@ -207,11 +218,8 @@ export default function Dashboard() {
       </div>
 
       {/* Create Ticket (Users Only) */}
-      {isUserOnly && !isAgent && !isAdmin && (
-        <form
-          onSubmit={createTicket}
-          className="mb-6 p-6 border rounded-lg bg-white shadow"
-        >
+      {isUserOnly && (
+        <form onSubmit={createTicket} className="mb-6 p-6 border rounded-lg bg-white shadow">
           <h2 className="text-xl font-semibold mb-4">Create Ticket</h2>
 
           <input
@@ -260,15 +268,12 @@ export default function Dashboard() {
         </form>
       )}
 
-      {/* Ticket List */}
+      {/* Ticket List header */}
       <h2 className="text-xl font-semibold mb-3">
-        {isAdmin
-          ? "All Tickets"
-          : isAgent
-          ? "Assigned Tickets"
-          : "Your Tickets"}
+        {isAdmin ? "All Tickets" : isAgent ? "Assigned Tickets" : "Your Tickets"}
       </h2>
 
+      {/* Ticket list */}
       {tickets.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-500">No tickets found.</p>
@@ -278,25 +283,22 @@ export default function Dashboard() {
           {tickets.map((t) => (
             <div
               key={t.id}
-              className={`
-                p-5 border rounded-lg shadow transition hover:shadow-lg
-                ${
-                  t.status === "OPEN"
-                    ? "bg-green-50 border-green-200"
-                    : t.status === "IN_PROGRESS"
-                    ? "bg-blue-50 border-blue-200"
-                    : t.status === "RESOLVED"
-                    ? "bg-yellow-50 border-yellow-200"
-                    : "bg-gray-100 border-gray-300"
-                }
-              `}
+              className={`p-5 border rounded-lg shadow transition hover:shadow-lg ${
+                t.status === "OPEN"
+                  ? "bg-green-50 border-green-200"
+                  : t.status === "IN_PROGRESS"
+                  ? "bg-blue-50 border-blue-200"
+                  : t.status === "RESOLVED"
+                  ? "bg-yellow-50 border-yellow-200"
+                  : "bg-gray-100 border-gray-300"
+              }`}
             >
-              <a
-                href={`/ticket/${t.id}`}
-                className="text-lg font-semibold block mb-2 hover:text-blue-600"
+              <button
+                onClick={() => router.push(`/ticket/${t.id}`)}
+                className="text-left w-full text-lg font-semibold block mb-2 hover:text-blue-600"
               >
                 #{t.id} - {t.subject}
-              </a>
+              </button>
 
               <div className="text-sm mb-3">
                 <span
@@ -332,20 +334,17 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              <div className="text-sm text-gray-700 mb-3 line-clamp-2">
-                {t.description}
-              </div>
+              <div className="text-sm text-gray-700 mb-3 line-clamp-2">{t.description}</div>
 
               <div className="text-xs text-gray-500 mb-3 border-t pt-2">
                 <div>
-                  <strong>Owner:</strong> {t.owner?.email || "Unknown"}
+                  <strong>Owner:</strong> {displayPerson(t.owner) || "Unknown"}
                 </div>
                 <div>
-                  <strong>Assignee:</strong> {t.assignee?.email || "Unassigned"}
+                  <strong>Assignee:</strong> {displayPerson(t.assignee) || "Unassigned"}
                 </div>
                 <div>
-                  <strong>Created:</strong>{" "}
-                  {new Date(t.createdAt).toLocaleDateString()}
+                  <strong>Created:</strong> {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "-"}
                 </div>
               </div>
 
@@ -379,33 +378,18 @@ export default function Dashboard() {
 
       {/* Assign Modal */}
       {showAssignModal && (
-        <div
-          onClick={closeAssignModal}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
-          >
+        <div onClick={closeAssignModal} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">
-                  Assign Ticket #{selectedTicketId}
-                </h2>
-                <button
-                  onClick={closeAssignModal}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  &times;
-                </button>
+                <h2 className="text-xl font-bold">Assign Ticket #{selectedTicketId}</h2>
+                <button onClick={closeAssignModal} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
               </div>
 
               {loadingAgents ? (
                 <div className="text-center py-8">Loading agents...</div>
               ) : agents.length === 0 ? (
-                <div className="text-center py-8 text-gray-600">
-                  No agents available.
-                </div>
+                <div className="text-center py-8 text-gray-600">No agents available.</div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {agents.map((agent) => (
@@ -416,29 +400,17 @@ export default function Dashboard() {
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <div className="font-semibold">
-                            {agent.name || agent.email}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {agent.email}
-                          </div>
+                          <div className="font-semibold">{displayPerson(agent) || agent.email}</div>
+                          <div className="text-sm text-gray-600">{agent.email}</div>
                         </div>
 
                         <div className="text-right">
-                          <div
-                            className={`text-lg font-bold ${
-                              agent.activeTickets === 0
-                                ? "text-green-600"
-                                : agent.activeTickets < 5
-                                ? "text-yellow-600"
-                                : "text-red-600"
-                            }`}
-                          >
+                          <div className={`text-lg font-bold ${
+                            agent.activeTickets === 0 ? "text-green-600" : agent.activeTickets < 5 ? "text-yellow-600" : "text-red-600"
+                          }`}>
                             {agent.activeTickets}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            active tickets
-                          </div>
+                          <div className="text-xs text-gray-500">active tickets</div>
                         </div>
                       </div>
                     </button>
@@ -447,12 +419,7 @@ export default function Dashboard() {
               )}
 
               <div className="mt-6 flex justify-end">
-                <button
-                  onClick={closeAssignModal}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
+                <button onClick={closeAssignModal} className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
               </div>
             </div>
           </div>
