@@ -33,7 +33,9 @@ export default function Dashboard() {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
-        parsedUser.roles = Array.isArray(parsedUser.roles) ? parsedUser.roles : [];
+        parsedUser.roles = Array.isArray(parsedUser.roles)
+          ? parsedUser.roles
+          : [];
         setUser(parsedUser);
       }
     } catch (e) {
@@ -49,12 +51,13 @@ export default function Dashboard() {
     fetchTickets();
   }, [user, search, statusFilter]);
 
-  // Build query only if filter values are meaningful
+  // Build query URL safely
   const buildTicketsUrl = () => {
     const params = new URLSearchParams();
-    if (search && search.trim().length > 0) params.append("search", search.trim());
+    if (search.trim().length > 0) params.append("search", search.trim());
     if (statusFilter && statusFilter !== "" && statusFilter !== "ALL")
       params.append("status", statusFilter);
+
     const query = params.toString();
     return `/tickets${query ? "?" + query : ""}`;
   };
@@ -66,7 +69,7 @@ export default function Dashboard() {
       setTickets(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Unable to fetch tickets:", err);
-      alert("Failed to load tickets. Please try again.");
+      alert("Failed to load tickets.");
       setTickets([]);
     }
   };
@@ -99,7 +102,9 @@ export default function Dashboard() {
 
   const assignTicketToAgent = async (agentId) => {
     try {
-      await API.put(`/tickets/${selectedTicketId}/assign?assigneeId=${agentId}`);
+      await API.put(
+        `/tickets/${selectedTicketId}/assign?assigneeId=${agentId}`
+      );
       closeAssignModal();
       fetchTickets();
     } catch (err) {
@@ -124,13 +129,21 @@ export default function Dashboard() {
       alert("Subject and description are required");
       return;
     }
+
     try {
-      await API.post("/tickets", { subject, description, priority, category });
+      await API.post("/tickets", {
+        subject,
+        description,
+        priority,
+        category,
+      });
+
+      // Reset form
       setSubject("");
       setDescription("");
       setPriority("MEDIUM");
       setCategory("OTHER");
-      // refresh so the user's new ticket appears immediately
+
       await fetchTickets();
       alert("Ticket created!");
     } catch (err) {
@@ -148,31 +161,37 @@ export default function Dashboard() {
   const userRoles = Array.isArray(user?.roles) ? user.roles : [];
   const isAdmin = userRoles.includes("ROLE_ADMIN");
   const isAgent = userRoles.includes("ROLE_AGENT");
-  const isUserOnly = userRoles.includes("ROLE_USER") && !isAgent && !isAdmin;
+  const isUserOnly =
+    userRoles.includes("ROLE_USER") && !isAgent && !isAdmin;
 
   if (!user)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div>Loading...</div>
+        Loading...
       </div>
     );
 
-  // Helper to display name or fallback to email
+  // Helper to display name or email
   const displayPerson = (person) => {
     if (!person) return null;
-    return person.name || person.email || null;
+    return person.name || person.email;
   };
 
   return (
     <div className="p-6">
-      {/* Header */}
+      {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">
-            {isAdmin ? "Admin Dashboard" : isAgent ? "Agent Dashboard" : "My Tickets"}
+            {isAdmin
+              ? "Admin Dashboard"
+              : isAgent
+              ? "Agent Dashboard"
+              : "My Tickets"}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Logged in as: {user.name || user.email} ({userRoles.join(", ")})
+            Logged in as: {user.name || user.email} (
+            {userRoles.join(", ")})
           </p>
         </div>
 
@@ -195,7 +214,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Search + Filters */}
+      {/* SEARCH + FILTER */}
       <div className="mb-6 flex gap-3 bg-gray-50 p-4 rounded-lg shadow-sm">
         <input
           placeholder="Search tickets by subject or description..."
@@ -217,9 +236,12 @@ export default function Dashboard() {
         </select>
       </div>
 
-      {/* Create Ticket (Users Only) */}
+      {/* CREATE TICKET */}
       {isUserOnly && (
-        <form onSubmit={createTicket} className="mb-6 p-6 border rounded-lg bg-white shadow">
+        <form
+          onSubmit={createTicket}
+          className="mb-6 p-6 border rounded-lg bg-white shadow"
+        >
           <h2 className="text-xl font-semibold mb-4">Create Ticket</h2>
 
           <input
@@ -268,12 +290,15 @@ export default function Dashboard() {
         </form>
       )}
 
-      {/* Ticket List header */}
+      {/* TICKET LIST */}
       <h2 className="text-xl font-semibold mb-3">
-        {isAdmin ? "All Tickets" : isAgent ? "Assigned Tickets" : "Your Tickets"}
+        {isAdmin
+          ? "All Tickets"
+          : isAgent
+          ? "Assigned Tickets"
+          : "Your Tickets"}
       </h2>
 
-      {/* Ticket list */}
       {tickets.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-500">No tickets found.</p>
@@ -283,14 +308,15 @@ export default function Dashboard() {
           {tickets.map((t) => (
             <div
               key={t.id}
-              className={`p-5 border rounded-lg shadow transition hover:shadow-lg ${t.status === "OPEN"
+              className={`p-5 border rounded-lg shadow transition hover:shadow-lg ${
+                t.status === "OPEN"
                   ? "bg-green-50 border-green-200"
                   : t.status === "IN_PROGRESS"
-                    ? "bg-blue-50 border-blue-200"
-                    : t.status === "RESOLVED"
-                      ? "bg-yellow-50 border-yellow-200"
-                      : "bg-gray-100 border-gray-300"
-                }`}
+                  ? "bg-blue-50 border-blue-200"
+                  : t.status === "RESOLVED"
+                  ? "bg-yellow-50 border-yellow-200"
+                  : "bg-gray-100 border-gray-300"
+              }`}
             >
               <button
                 onClick={() => router.push(`/ticket/${t.id}`)}
@@ -299,29 +325,32 @@ export default function Dashboard() {
                 #{t.id} - {t.subject}
               </button>
 
+              {/* BADGES */}
               <div className="text-sm mb-3">
                 <span
-                  className={`inline-block px-2 py-1 rounded text-xs font-semibold mr-2 ${t.status === "OPEN"
+                  className={`inline-block px-2 py-1 rounded text-xs font-semibold mr-2 ${
+                    t.status === "OPEN"
                       ? "bg-green-200 text-green-900"
                       : t.status === "IN_PROGRESS"
-                        ? "bg-blue-200 text-blue-900"
-                        : t.status === "RESOLVED"
-                          ? "bg-yellow-200 text-yellow-900"
-                          : "bg-gray-300 text-gray-900"
-                    }`}
+                      ? "bg-blue-200 text-blue-900"
+                      : t.status === "RESOLVED"
+                      ? "bg-yellow-200 text-yellow-900"
+                      : "bg-gray-300 text-gray-900"
+                  }`}
                 >
                   {t.status.replace("_", " ")}
                 </span>
 
                 <span
-                  className={`inline-block px-2 py-1 rounded text-xs font-semibold ${t.priority === "URGENT"
+                  className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
+                    t.priority === "URGENT"
                       ? "bg-red-200 text-red-900"
                       : t.priority === "HIGH"
-                        ? "bg-orange-200 text-orange-900"
-                        : t.priority === "MEDIUM"
-                          ? "bg-yellow-200 text-yellow-900"
-                          : "bg-gray-200 text-gray-900"
-                    }`}
+                      ? "bg-orange-200 text-orange-900"
+                      : t.priority === "MEDIUM"
+                      ? "bg-yellow-200 text-yellow-900"
+                      : "bg-gray-200 text-gray-900"
+                  }`}
                 >
                   {t.priority}
                 </span>
@@ -331,25 +360,37 @@ export default function Dashboard() {
                 </span>
               </div>
 
-              <div className="text-sm text-gray-700 mb-3 line-clamp-2">{t.description}</div>
+              {/* DESCRIPTION PREVIEW */}
+              <div className="text-sm text-gray-700 mb-3 line-clamp-2">
+                {t.description}
+              </div>
 
+              {/* META */}
               <div className="text-xs text-gray-500 mb-3 border-t pt-2">
                 <div>
-                  <strong>Owner:</strong> {displayPerson(t.owner) || "Unknown"}
+                  <strong>Owner:</strong>{" "}
+                  {displayPerson(t.owner) || "Unknown"}
                 </div>
                 <div>
-                  <strong>Assignee:</strong> {displayPerson(t.assignee) || "Unassigned"}
+                  <strong>Assignee:</strong>{" "}
+                  {displayPerson(t.assignee) || "Unassigned"}
                 </div>
                 <div>
-                  <strong>Created:</strong> {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "-"}
+                  <strong>Created:</strong>{" "}
+                  {t.createdAt
+                    ? new Date(t.createdAt).toLocaleDateString()
+                    : "-"}
                 </div>
               </div>
 
+              {/* ACTIONS */}
               {(isAdmin || isAgent) && (
                 <div className="flex gap-2 flex-wrap">
                   <select
                     value={t.status}
-                    onChange={(e) => updateStatus(t.id, e.target.value)}
+                    onChange={(e) =>
+                      updateStatus(t.id, e.target.value)
+                    }
                     className="text-xs border rounded p-1 flex-1"
                   >
                     <option value="OPEN">OPEN</option>
@@ -373,40 +414,72 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Assign Modal */}
+      {/* ASSIGN MODAL */}
       {showAssignModal && (
-        <div onClick={closeAssignModal} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div
+          onClick={closeAssignModal}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+          >
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Assign Ticket #{selectedTicketId}</h2>
-                <button onClick={closeAssignModal} className="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                <h2 className="text-xl font-bold">
+                  Assign Ticket #{selectedTicketId}
+                </h2>
+                <button
+                  onClick={closeAssignModal}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  &times;
+                </button>
               </div>
 
               {loadingAgents ? (
-                <div className="text-center py-8">Loading agents...</div>
+                <div className="text-center py-8">
+                  Loading agents...
+                </div>
               ) : agents.length === 0 ? (
-                <div className="text-center py-8 text-gray-600">No agents available.</div>
+                <div className="text-center py-8 text-gray-600">
+                  No agents available.
+                </div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {agents.map((agent) => (
                     <button
                       key={agent.id}
-                      onClick={() => assignTicketToAgent(agent.id)}
+                      onClick={() =>
+                        assignTicketToAgent(agent.id)
+                      }
                       className="w-full p-4 border rounded-lg hover:bg-blue-50 hover:border-blue-500 transition text-left"
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <div className="font-semibold">{displayPerson(agent) || agent.email}</div>
-                          <div className="text-sm text-gray-600">{agent.email}</div>
+                          <div className="font-semibold">
+                            {displayPerson(agent) || agent.email}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {agent.email}
+                          </div>
                         </div>
 
                         <div className="text-right">
-                          <div className={`text-lg font-bold ${agent.activeTickets === 0 ? "text-green-600" : agent.activeTickets < 5 ? "text-yellow-600" : "text-red-600"
-                            }`}>
+                          <div
+                            className={`text-lg font-bold ${
+                              agent.activeTickets === 0
+                                ? "text-green-600"
+                                : agent.activeTickets < 5
+                                ? "text-yellow-600"
+                                : "text-red-600"
+                            }`}
+                          >
                             {agent.activeTickets}
                           </div>
-                          <div className="text-xs text-gray-500">active tickets</div>
+                          <div className="text-xs text-gray-500">
+                            active tickets
+                          </div>
                         </div>
                       </div>
                     </button>
@@ -415,7 +488,12 @@ export default function Dashboard() {
               )}
 
               <div className="mt-6 flex justify-end">
-                <button onClick={closeAssignModal} className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
+                <button
+                  onClick={closeAssignModal}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
