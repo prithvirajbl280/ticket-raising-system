@@ -66,10 +66,10 @@ class TicketController(
     @PostMapping("/{id}/comments")
     fun addComment(
         @PathVariable id: Long,
-        @RequestBody body: Map<String, String>
+        @RequestBody req: com.ticketing.dto.CommentRequest
     ): ResponseEntity<String> {
-        val text = body["text"] ?: throw RuntimeException("Comment text is required")
-        ticketService.addComment(id, currentEmail(), text)
+        if (req.text.isBlank()) throw RuntimeException("Comment text is required")
+        ticketService.addComment(id, currentEmail(), req.text)
         return ResponseEntity.ok("Comment added")
     }
 }
