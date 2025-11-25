@@ -33,76 +33,50 @@ class TicketService(
 
     /**
      * FINAL CORRECT LOGIC:
-     * ADMIN  → ALWAYS sees ALL tickets (no filters)
-     * AGENT  → only assigned tickets
-     * USER   → only own tickets
+     * --------------------
+     * ADMIN  → ALWAYS sees ALL tickets
+     * AGENT  → ONLY assigned tickets
+     * USER   → ONLY their own tickets
      *
-     * Search ALWAYS matches subject or description
-     * Status ALWAYS filters correctly
+     * Search and Status apply AFTER RBAC.
      */
     fun searchTickets(email: String, query: String?, status: String?): List<Ticket> {
         val user = userRepository.findByEmail(email)
             .orElseThrow { RuntimeException("User not found") }
 
-        val isAdmin = user.roles.contains(Role.ROLE_ADMIN)
-        val isAgent = user.roles.contains(Role.ROLE_AGENT)
-
         val trimmedQuery = query?.trim()
         val hasSearch = !trimmedQuery.isNullOrBlank()
 
-        // ⭐ ADMIN → Return ALL tickets BEFORE applying any filter
-        if (isAdmin) {
-            val all = ticketRepository.findAll()
+        val isAdmin = user.roles.contains(Role.ROLE_ADMIN)
+        val isAgent = user.roles.contains(Role.ROLE_AGENT)
 
-            // apply search and status manually
-            return all.filter { ticket ->
-                val statusMatch = status.isNullOrBlank() || status == "ALL" || ticket.status.name == status
-                val searchMatch = !hasSearch ||
-                        ticket.subject.contains(trimmedQuery!!, ignoreCase = true) ||
-                        ticket.description.contains(trimmedQuery, ignoreCase = true)
-
-                statusMatch && searchMatch
-            }
+        // ⭐ STEP 1 — Determine base tickets
+        val baseTickets: List<Ticket> = when {
+            isAdmin -> ticketRepository.findAll()                  // Admin ALWAYS sees ALL
+            isAgent -> ticketRepository.findByAssigneeId(user.id)  // Agent → only assigned
+            else -> ticketRepository.findByOwnerId(user.id)        // User → only own
         }
 
-        // ⭐ NOT ADMIN → Apply RBAC via specification
-        val spec = Specification<Ticket> { root, _, cb ->
-            val predicates = mutableListOf<Predicate>()
-
-            if (isAgent) {
-                // Agents see ONLY their assigned tickets
-                predicates.add(
-                    cb.equal(root.get<User>("assignee").get<Long>("id"), user.id)
-                )
-            } else {
-                // Regular users → only own tickets
-                predicates.add(
-                    cb.equal(root.get<User>("owner").get<Long>("id"), user.id)
-                )
+        // ⭐ STEP 2 — Apply status filter
+        val statusFiltered = if (!status.isNullOrBlank() && status != "ALL") {
+            try {
+                val desired = Status.valueOf(status)
+                baseTickets.filter { it.status == desired }
+            } catch (e: Exception) {
+                baseTickets
             }
+        } else baseTickets
 
-            // STATUS FILTER
-            if (!status.isNullOrBlank() && status != "ALL") {
-                try {
-                    predicates.add(cb.equal(root.get<Status>("status"), Status.valueOf(status)))
-                } catch (_: IllegalArgumentException) { }
+        // ⭐ STEP 3 — Apply search filter
+        val searchFiltered = if (hasSearch) {
+            val q = trimmedQuery!!.lowercase()
+            statusFiltered.filter {
+                it.subject.lowercase().contains(q) ||
+                it.description.lowercase().contains(q)
             }
+        } else statusFiltered
 
-            // SEARCH FILTER
-            if (hasSearch) {
-                val likePattern = "%${trimmedQuery!!.lowercase()}%"
-                predicates.add(
-                    cb.or(
-                        cb.like(cb.lower(root.get("subject")), likePattern),
-                        cb.like(cb.lower(root.get("description")), likePattern)
-                    )
-                )
-            }
-
-            cb.and(*predicates.toTypedArray())
-        }
-
-        return ticketRepository.findAll(spec).distinctBy { it.id }
+        return searchFiltered.distinctBy { it.id }
     }
 
     fun assignTicket(ticketId: Long, assigneeId: Long): Ticket {
@@ -149,4 +123,3 @@ class TicketService(
             .count { it.status == Status.OPEN || it.status == Status.IN_PROGRESS }
     }
 }
-
