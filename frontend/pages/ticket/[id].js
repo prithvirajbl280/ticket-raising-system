@@ -97,7 +97,7 @@ export default function TicketDetail() {
                 className="bg-slate-50 border border-slate-200 p-4 rounded-xl shadow-sm"
               >
                 <div className="flex justify-between mb-2 text-xs text-gray-500">
-                  <span>{c.author?.email}</span>
+                  <span>{c.author?.name || c.author?.email}</span>
                   <span>{new Date(c.createdAt).toLocaleString()}</span>
                 </div>
                 <p className="text-gray-700">{c.text}</p>
