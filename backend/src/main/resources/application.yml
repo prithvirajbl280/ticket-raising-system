@@ -1,30 +1,38 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}?prepareThreshold=0&preparedStatementCacheQueries=0&cachePrepStmts=false
+    url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     hikari:
-      maximum-pool-size: 2
+      maximum-pool-size: 3
       minimum-idle: 1
       connection-timeout: 30000
-      idle-timeout: 300000
-      max-lifetime: 600000
-      leak-detection-threshold: 60000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      # 🔥 Critical: Disable prepared statement caching for Supabase
+      data-source-properties:
+        useServerPrepStmts: false
+        cachePrepStmts: false
+        prepStmtCacheSize: 0
+        prepStmtCacheSqlLimit: 0
 
   jpa:
     hibernate:
-      ddl-auto: update
+      # Changed from 'update' to 'validate' - safer for production with Supabase
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        # 🔥 Disable Hibernate query/prepared statement caching
+        query:
+          plan_cache_max_size: 0
         jdbc:
           batch_size: 15
+          prepared_statement_cache_queries: 0
+          prepared_statement_cache_size: 0
         order_inserts: true
         order_updates: true
-        # Fix for prepared statement collision
-        temp:
-          use_jdbc_metadata_defaults: false
 
 server:
   port: ${PORT:8080}
