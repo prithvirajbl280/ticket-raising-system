@@ -15,13 +15,42 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/');
       return;
     }
-    setUser(JSON.parse(localStorage.getItem('user')));
+    
+    try {
+      const storedUser = localStorage.getItem('user');
+      console.log('Stored user:', storedUser); // Debug log
+      
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        console.log('Parsed user:', parsedUser); // Debug log
+        
+        // Ensure roles is an array
+        if (parsedUser) {
+          parsedUser.roles = Array.isArray(parsedUser.roles) ? parsedUser.roles : [];
+        }
+        
+        setUser(parsedUser);
+      }
+    } catch (err) {
+      console.error('Error parsing user data:', err);
+      localStorage.clear();
+      router.push('/');
+      return;
+    }
+    
     fetchTickets();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchTickets();
+    }
   }, [search, statusFilter]);
 
   const fetchTickets = async () => {
@@ -71,9 +100,25 @@ export default function Dashboard() {
     }
   };
 
-  // Fixed: roles is array of strings, not objects
-  const isAdmin = user?.roles?.includes('ROLE_ADMIN');
-  const isAgent = user?.roles?.includes('ROLE_AGENT');
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    router.push('/');
+  };
+
+  // Safely check roles - ensure user.roles is always an array
+  const userRoles = Array.isArray(user?.roles) ? user.roles : [];
+  const isAdmin = userRoles.includes('ROLE_ADMIN');
+  const isAgent = userRoles.includes('ROLE_AGENT');
+
+  // Show loading state while user data is being loaded
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -90,11 +135,7 @@ export default function Dashboard() {
           )}
           <button 
             className="bg-gray-200 px-3 py-1 rounded" 
-            onClick={() => { 
-              localStorage.removeItem('token'); 
-              localStorage.removeItem('user');
-              router.push('/'); 
-            }}
+            onClick={handleLogout}
           >
             Logout
           </button>
