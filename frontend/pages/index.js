@@ -18,6 +18,7 @@ export default function Login() {
       
       const userData = {
         email: res.data.email, 
+        name: res.data.name,
         roles: Array.isArray(res.data.roles) ? res.data.roles : []
       };
       
