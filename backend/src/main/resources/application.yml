@@ -1,19 +1,20 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
+    url: ${SPRING_DATASOURCE_URL}?prepareThreshold=0&preparedStatementCacheQueries=0&cachePrepStmts=false
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     hikari:
-      maximum-pool-size: 3
+      maximum-pool-size: 2
       minimum-idle: 1
       connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+      idle-timeout: 300000
+      max-lifetime: 600000
+      leak-detection-threshold: 60000
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -21,6 +22,9 @@ spring:
           batch_size: 15
         order_inserts: true
         order_updates: true
+        # Fix for prepared statement collision
+        temp:
+          use_jdbc_metadata_defaults: false
 
 server:
   port: ${PORT:8080}
