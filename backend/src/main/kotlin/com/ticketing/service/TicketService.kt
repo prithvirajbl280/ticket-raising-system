@@ -57,7 +57,7 @@ class TicketService(
                     // Note: use equality on assignee.id and also allow NULL assignee
                     predicates.add(
                         cb.or(
-                            cb.equal(root.get<User>("assignee").get<Long>("id"), user.id),
+                            cb.equal(root.get<User>("assignee").get<Long>("id"), user.id)
                         )
                     )
                 } else {
