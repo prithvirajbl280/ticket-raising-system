@@ -13,7 +13,10 @@ import org.springframework.security.access.prepost.PreAuthorize
 
 @RestController
 @RequestMapping("/api/tickets")
-class TicketController(private val ticketService: TicketService, private val userService: UserService) {
+class TicketController(
+    private val ticketService: TicketService,
+    private val userService: UserService
+) {
 
     private fun currentEmail(): String =
         SecurityContextHolder.getContext().authentication.principal as String
@@ -21,8 +24,8 @@ class TicketController(private val ticketService: TicketService, private val use
     @PostMapping
     fun create(@RequestBody dto: TicketDto): ResponseEntity<Ticket> {
         val ticket = Ticket(
-            subject = dto.subject, 
-            description = dto.description, 
+            subject = dto.subject,
+            description = dto.description,
             priority = Priority.valueOf(dto.priority),
             category = com.ticketing.model.Category.valueOf(dto.category)
         )
@@ -57,5 +60,16 @@ class TicketController(private val ticketService: TicketService, private val use
     fun changeStatus(@PathVariable id: Long, @RequestParam status: String): ResponseEntity<Ticket> {
         val updated = ticketService.changeStatus(id, Status.valueOf(status))
         return ResponseEntity.ok(updated)
+    }
+
+    // ✅ ADD COMMENT ENDPOINT (MISSING EARLIER)
+    @PostMapping("/{id}/comments")
+    fun addComment(
+        @PathVariable id: Long,
+        @RequestBody body: Map<String, String>
+    ): ResponseEntity<String> {
+        val text = body["text"] ?: throw RuntimeException("Comment text is required")
+        ticketService.addComment(id, currentEmail(), text)
+        return ResponseEntity.ok("Comment added")
     }
 }
