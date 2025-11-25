@@ -17,6 +17,9 @@ data class Ticket(
     var priority: Priority = Priority.MEDIUM,
 
     @Enumerated(EnumType.STRING)
+    var category: Category = Category.OTHER,
+
+    @Enumerated(EnumType.STRING)
     var status: Status = Status.OPEN,
 
     @ManyToOne
