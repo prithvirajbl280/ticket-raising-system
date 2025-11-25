@@ -20,14 +20,87 @@ export default function Signup(){
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <form onSubmit={register} className="w-full max-w-md p-6 border rounded">
-        <h1 className="text-xl mb-4">Sign up</h1>
-        <input required value={name} onChange={e=>setName(e.target.value)} placeholder="Name" className="mb-2 w-full p-2 border rounded" />
-        <input required value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" className="mb-2 w-full p-2 border rounded" />
-        <input required value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="Password" className="mb-2 w-full p-2 border rounded" />
-        <button className="bg-green-600 text-white px-4 py-2 rounded">Register</button>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="w-full max-w-md mx-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
+            <p className="text-gray-600">Join our ticketing system today</p>
+          </div>
+
+          <form onSubmit={register} className="space-y-5">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                Full Name
+              </label>
+              <input
+                id="name"
+                type="text"
+                required
+                value={name}
+                onChange={e=>setName(e.target.value)}
+                placeholder="John Doe"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200 outline-none"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={e=>setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200 outline-none"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                required
+                value={password}
+                onChange={e=>setPassword(e.target.value)}
+                type="password"
+                placeholder="Create a strong password"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200 outline-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              Create Account
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              Already have an account?{' '}
+              <a href="/" className="text-green-600 hover:text-green-700 font-semibold hover:underline">
+                Sign in
+              </a>
+            </p>
+          </div>
+        </div>
+
+        <p className="text-center text-gray-500 text-sm mt-6">
+          By signing up, you agree to our terms and privacy policy
+        </p>
+      </div>
     </div>
   );
 }
