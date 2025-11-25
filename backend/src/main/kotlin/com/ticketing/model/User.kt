@@ -20,6 +20,10 @@ data class User(
     var name: String? = null,
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+        name = "user_roles",
+        joinColumns = [JoinColumn(name = "user_id")]
+    )
     @Enumerated(EnumType.STRING)
     @JsonIgnore  // Hide the internal roles set
     var roles: MutableSet<Role> = mutableSetOf(Role.ROLE_USER)
