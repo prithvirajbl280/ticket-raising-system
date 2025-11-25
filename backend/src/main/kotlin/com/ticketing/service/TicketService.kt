@@ -27,36 +27,42 @@ class TicketService(
 
     fun getTicket(id: Long): Optional<Ticket> = ticketRepository.findById(id)
 
-    fun listTicketsForUser(email: String): List<Ticket> {
-        val user = userRepository.findByEmail(email).orElseThrow { RuntimeException("User not found") }
-        return when {
-            user.roles.any { it.name == Role.ROLE_ADMIN.name } -> ticketRepository.findAll()
-            user.roles.any { it.name == Role.ROLE_AGENT.name } -> ticketRepository.findByAssigneeId(user.id)
-            else -> ticketRepository.findByOwnerId(user.id)
-        }
-    }
-
     fun searchTickets(email: String, query: String?, status: String?): List<Ticket> {
         val user = userRepository.findByEmail(email).orElseThrow { RuntimeException("User not found") }
         
         val spec = Specification<Ticket> { root, _, cb ->
             val predicates = mutableListOf<Predicate>()
             
-            // RBAC Filter
-            if (user.roles.none { it.name == Role.ROLE_ADMIN.name }) {
-                if (user.roles.any { it.name == Role.ROLE_AGENT.name }) {
-                    predicates.add(cb.equal(root.get<User>("assignee").get<Long>("id"), user.id))
+            // RBAC Filter - FIXED LOGIC
+            val isAdmin = user.roles.any { it.name == Role.ROLE_ADMIN.name }
+            val isAgent = user.roles.any { it.name == Role.ROLE_AGENT.name }
+            
+            if (!isAdmin) {
+                if (isAgent) {
+                    // Agents see tickets assigned to them OR unassigned tickets
+                    predicates.add(
+                        cb.or(
+                            cb.equal(root.get<User>("assignee").get<Long>("id"), user.id),
+                            cb.isNull(root.get<User>("assignee"))
+                        )
+                    )
                 } else {
+                    // Regular users see only their own tickets
                     predicates.add(cb.equal(root.get<User>("owner").get<Long>("id"), user.id))
                 }
             }
+            // Admins see ALL tickets (no filter needed)
 
             // Status Filter
             if (!status.isNullOrBlank() && status != "ALL") {
-                predicates.add(cb.equal(root.get<Status>("status"), Status.valueOf(status)))
+                try {
+                    predicates.add(cb.equal(root.get<Status>("status"), Status.valueOf(status)))
+                } catch (e: IllegalArgumentException) {
+                    // Invalid status, ignore filter
+                }
             }
 
-            // Search Query
+            // Search Query - search in subject and description
             if (!query.isNullOrBlank()) {
                 val likePattern = "%${query.lowercase()}%"
                 predicates.add(cb.or(
