@@ -58,7 +58,7 @@ class UserController(
     @PutMapping("/users/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
     fun updateUserRoles(@PathVariable id: Long, @RequestBody roles: List<String>): ResponseEntity<User> {
-        val user = userService.findById(id) ?: return ResponseEntity.notFound().build()
+        val user = userService.findById(id).orElse(null) ?: return ResponseEntity.notFound().build()
         
         val newRoles = roles.mapNotNull { roleName ->
             try {
