@@ -288,27 +288,26 @@ export default function Dashboard() {
           {tickets.map((t) => (
             <div
               key={t.id}
-              className="rounded-2xl shadow-xl p-6 border bg-white/80 backdrop-blur-lg hover:-translate-y-1 hover:shadow-2xl transition"
+              onClick={() => router.push(`/ticket/${t.id}`)}
+              className="rounded-2xl shadow-xl p-6 border bg-white/80 backdrop-blur-lg hover:-translate-y-1 hover:shadow-2xl transition cursor-pointer relative"
             >
               {/* color bar */}
               <div
-                className={`h-1.5 rounded-full mb-4 ${
-                  t.status === "OPEN"
+                className={`h-1.5 rounded-full mb-4 ${t.status === "OPEN"
                     ? "bg-green-500"
                     : t.status === "IN_PROGRESS"
-                    ? "bg-blue-500"
-                    : t.status === "RESOLVED"
-                    ? "bg-yellow-500"
-                    : "bg-gray-500"
-                }`}
+                      ? "bg-blue-500"
+                      : t.status === "RESOLVED"
+                        ? "bg-yellow-500"
+                        : "bg-gray-500"
+                  }`}
               ></div>
 
-              <button
-                onClick={() => router.push(`/ticket/${t.id}`)}
+              <div
                 className="text-left text-lg font-semibold mb-3 hover:text-indigo-600"
               >
                 #{t.id} — {t.subject}
-              </button>
+              </div>
 
               <div className="flex gap-2 mb-3">
                 <span className="px-2 py-1 text-xs rounded-lg bg-indigo-100 text-indigo-700">
@@ -334,7 +333,7 @@ export default function Dashboard() {
               </div>
 
               {(isAdmin || isAgent) && (
-                <div className="flex gap-2">
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <select
                     value={t.status}
                     onChange={(e) => updateStatus(t.id, e.target.value)}
@@ -388,13 +387,12 @@ export default function Dashboard() {
 
                         <div className="text-right">
                           <div
-                            className={`font-bold ${
-                              agent.activeTickets < 3
+                            className={`font-bold ${agent.activeTickets < 3
                                 ? "text-green-600"
                                 : agent.activeTickets < 6
-                                ? "text-yellow-600"
-                                : "text-red-600"
-                            }`}
+                                  ? "text-yellow-600"
+                                  : "text-red-600"
+                              }`}
                           >
                             {agent.activeTickets}
                           </div>
