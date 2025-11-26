@@ -4,9 +4,9 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ---
 
-## ** Screenshots**
+## **Screenshots**
 
-### ** Authentication Pages**
+### **Authentication Pages**
 
 #### **Login Page**
 
@@ -32,7 +32,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ---
 
-### ** User Dashboard**
+### **User Dashboard**
 
 #### **User View**
 
@@ -67,7 +67,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ### 
 
-### ** Ticket Detail Page**
+### **Ticket Detail Page**
 
 #### **Ticket Overview**
 
@@ -81,7 +81,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ---
 
-### ** Agent Dashboard**
+### **Agent Dashboard**
 
 #### **Agent View**
 
@@ -97,7 +97,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ### 
 
-### ** Admin Dashboard**
+### **Admin Dashboard**
 
 #### **Admin View \- All Tickets**
 
@@ -129,9 +129,9 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ---
 
-## **✨ Key Features**
+## **Key Features**
 
-### ** Beautiful UI/UX**
+### **Beautiful UI/UX**
 
 * **Gradient backgrounds** with animated floating blobs  
 * **Color-coded status indicators** (Green: Open, Blue: In Progress, Yellow: Resolved, Gray: Closed)  
@@ -139,7 +139,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 * **Smooth animations** and hover effects  
 * **Modern glassmorphism** design elements
 
-### ** Authentication & Authorization**
+### **Authentication & Authorization**
 
 * **JWT-based authentication** for secure sessions  
 * **Role-based access control** (User, Agent, Admin)  
@@ -161,7 +161,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 * **Real-time updates** when comments are added  
 * **Author tracking** for accountability
 
-### ** User Management (Admin Only)**
+### **User Management (Admin Only)**
 
 * **View all users** in the system  
 * **Edit user roles** dynamically  
@@ -169,13 +169,13 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 * **Role assignment**: USER, AGENT, ADMIN  
 * **User statistics** dashboard
 
-### ** Smart Agent Assignment (Admin Only)**
+### **Smart Agent Assignment (Admin Only)**
 
 * **Workload-based assignment** \- see active tickets per agent  
 * **Visual indicators** for agent availability  
 * **One-click assignment** to agents
 
-### ** Dashboard Features**
+### **Dashboard Features**
 
 * **Role-specific views**:  
   * **Users**: See only their own tickets  
@@ -424,7 +424,7 @@ The application uses a modern, vibrant color palette:
 
 ## 
 
-## **🚀 Deployment**
+## **Deployment**
 
 ### **Backend (Railway)**
 
@@ -444,7 +444,7 @@ The application uses a modern, vibrant color palette:
 
 ---
 
-## **🐛 Known Issues & Limitations**
+## **Known Issues & Limitations**
 
 1. **Email notifications disabled** \- SMTP configuration required  
 2. **No file attachments** \- Feature can be added
