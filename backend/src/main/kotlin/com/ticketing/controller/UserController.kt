@@ -54,4 +54,30 @@ class UserController(
         userService.deleteById(id)
         return ResponseEntity.ok(mapOf("message" to "User deleted successfully"))
     }
+
+    @PutMapping("/users/{id}/roles")
+    @PreAuthorize("hasRole('ADMIN')")
+    fun updateUserRoles(@PathVariable id: Long, @RequestBody roles: List<String>): ResponseEntity<User> {
+        val user = userService.findById(id) ?: return ResponseEntity.notFound().build()
+        
+        val newRoles = roles.mapNotNull { roleName ->
+            try {
+                Role.valueOf(roleName)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }.toMutableSet()
+
+        if (newRoles.isEmpty()) {
+             // Ensure at least ROLE_USER if nothing valid provided, or handle as error. 
+             // For now, let's default to ROLE_USER if empty to prevent lockouts, or just keep it empty?
+             // Better to just add ROLE_USER if they strip everything, or maybe just let them have what they asked (if valid).
+             // Let's assume the UI sends valid roles. If empty, maybe they want to remove all access? 
+             // But User entity defaults to ROLE_USER. Let's just set what they give.
+             // Actually, let's ensure ROLE_USER is always there? No, maybe they want to be just ADMIN.
+        }
+
+        user.roles = newRoles
+        return ResponseEntity.ok(userService.save(user))
+    }
 }
