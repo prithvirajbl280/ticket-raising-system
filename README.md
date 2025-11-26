@@ -10,7 +10,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 #### **Login Page**
 
-![][image1]
+![Login Page](./docs/Login%20Page.png)
 
  *Clean and modern login interface with gradient background*
 
