@@ -4,7 +4,12 @@ import { useRouter } from "next/router";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
+  const [editingUser, setEditingUser] = useState(null);
+  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const router = useRouter();
+
+  const AVAILABLE_ROLES = ["ROLE_USER", "ROLE_AGENT", "ROLE_ADMIN"];
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -41,6 +46,38 @@ export default function AdminUsers() {
       alert("User deleted successfully!");
     } catch (err) {
       alert("Failed to delete user");
+    }
+  };
+
+  const openRoleModal = (user) => {
+    setEditingUser(user);
+    setSelectedRoles(user.roles || []);
+    setShowRoleModal(true);
+  };
+
+  const closeRoleModal = () => {
+    setEditingUser(null);
+    setSelectedRoles([]);
+    setShowRoleModal(false);
+  };
+
+  const toggleRole = (role) => {
+    if (selectedRoles.includes(role)) {
+      setSelectedRoles(selectedRoles.filter((r) => r !== role));
+    } else {
+      setSelectedRoles([...selectedRoles, role]);
+    }
+  };
+
+  const saveRoles = async () => {
+    if (!editingUser) return;
+    try {
+      await API.put(`/admin/users/${editingUser.id}/roles`, selectedRoles);
+      closeRoleModal();
+      fetchUsers();
+    } catch (err) {
+      console.error("Failed to update roles", err);
+      alert("Failed to update roles");
     }
   };
 
@@ -167,9 +204,8 @@ export default function AdminUsers() {
                 {users.map((u, index) => (
                   <tr
                     key={u.id}
-                    className={`${
-                      index % 2 === 0 ? "bg-white" : "bg-slate-50/50"
-                    } hover:bg-indigo-50 transition-all duration-200 border-b border-gray-200`}
+                    className={`${index % 2 === 0 ? "bg-white" : "bg-slate-50/50"
+                      } hover:bg-indigo-50 transition-all duration-200 border-b border-gray-200`}
                   >
                     <td className="py-4 px-6">
                       <span className="px-3 py-1 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 rounded-full text-xs font-bold">
@@ -191,13 +227,12 @@ export default function AdminUsers() {
                           {u.roles.map((r) => (
                             <span
                               key={r}
-                              className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${
-                                r === "ROLE_ADMIN"
+                              className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${r === "ROLE_ADMIN"
                                   ? "bg-gradient-to-r from-red-400 to-rose-500 text-white"
                                   : r === "ROLE_AGENT"
-                                  ? "bg-gradient-to-r from-blue-400 to-cyan-500 text-white"
-                                  : "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
-                              }`}
+                                    ? "bg-gradient-to-r from-blue-400 to-cyan-500 text-white"
+                                    : "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
+                                }`}
                             >
                               {r.replace("ROLE_", "")}
                             </span>
@@ -209,15 +244,26 @@ export default function AdminUsers() {
                     </td>
 
                     <td className="py-4 px-6 text-center">
-                      <button
-                        className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 mx-auto"
-                        onClick={() => deleteUser(u.id)}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
-                      </button>
+                      <div className="flex justify-center gap-2">
+                        <button
+                          className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
+                          onClick={() => deleteUser(u.id)}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete
+                        </button>
+                        <button
+                          className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
+                          onClick={() => openRoleModal(u)}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                          Edit Roles
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -244,6 +290,73 @@ export default function AdminUsers() {
           </div>
         </div>
       </div>
+
+      {/* Role Modal */}
+      {showRoleModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 p-8 transform transition-all scale-100">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Edit Roles</h2>
+              <button onClick={closeRoleModal} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="mb-6 text-gray-600">
+              Assign roles for <strong className="text-indigo-600">{editingUser?.email}</strong>
+            </p>
+
+            <div className="space-y-3 mb-8">
+              {AVAILABLE_ROLES.map((role) => (
+                <label
+                  key={role}
+                  className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${selectedRoles.includes(role)
+                      ? "border-indigo-500 bg-indigo-50"
+                      : "border-gray-100 hover:border-indigo-200 hover:bg-gray-50"
+                    }`}
+                >
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors ${selectedRoles.includes(role)
+                      ? "border-indigo-500 bg-indigo-500"
+                      : "border-gray-300"
+                    }`}>
+                    {selectedRoles.includes(role) && (
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.includes(role)}
+                    onChange={() => toggleRole(role)}
+                    className="hidden"
+                  />
+                  <span className={`font-bold ${selectedRoles.includes(role) ? "text-indigo-700" : "text-gray-600"}`}>
+                    {role.replace("ROLE_", "")}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={closeRoleModal}
+                className="px-6 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveRoles}
+                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
