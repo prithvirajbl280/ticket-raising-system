@@ -4,9 +4,9 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ---
 
-## **📸 Screenshots**
+## ** Screenshots**
 
-### **🔐 Authentication Pages**
+### ** Authentication Pages**
 
 #### **Login Page**
 
@@ -32,7 +32,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ---
 
-### **👤 User Dashboard**
+### ** User Dashboard**
 
 #### **User View**
 
@@ -67,7 +67,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ### 
 
-### **🎯 Ticket Detail Page**
+### ** Ticket Detail Page**
 
 #### **Ticket Overview**
 
@@ -81,7 +81,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ---
 
-### **👨‍💼 Agent Dashboard**
+### ** Agent Dashboard**
 
 #### **Agent View**
 
@@ -97,7 +97,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ### 
 
-### **👑 Admin Dashboard**
+### ** Admin Dashboard**
 
 #### **Admin View \- All Tickets**
 
@@ -131,7 +131,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ## **✨ Key Features**
 
-### **🎨 Beautiful UI/UX**
+### ** Beautiful UI/UX**
 
 * **Gradient backgrounds** with animated floating blobs  
 * **Color-coded status indicators** (Green: Open, Blue: In Progress, Yellow: Resolved, Gray: Closed)  
@@ -139,14 +139,14 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 * **Smooth animations** and hover effects  
 * **Modern glassmorphism** design elements
 
-### **🔐 Authentication & Authorization**
+### ** Authentication & Authorization**
 
 * **JWT-based authentication** for secure sessions  
 * **Role-based access control** (User, Agent, Admin)  
 * **Password encryption** using BCrypt  
 * **Forgot password** functionality (email disabled in current version)
 
-### **🎫 Ticket Management**
+### **Ticket Management**
 
 * **Create tickets** with subject, description, priority, and category  
 * **Search tickets** by subject or description  
@@ -155,13 +155,13 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 * **Priority levels**: Low, Medium, High, Urgent  
 * **Categories**: Hardware, Software, Network, Other
 
-### **💬 Communication**
+### **Communication**
 
 * **Comment system** for ticket discussions  
 * **Real-time updates** when comments are added  
 * **Author tracking** for accountability
 
-### **👥 User Management (Admin Only)**
+### ** User Management (Admin Only)**
 
 * **View all users** in the system  
 * **Edit user roles** dynamically  
@@ -169,13 +169,13 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 * **Role assignment**: USER, AGENT, ADMIN  
 * **User statistics** dashboard
 
-### **🎯 Smart Agent Assignment (Admin Only)**
+### ** Smart Agent Assignment (Admin Only)**
 
 * **Workload-based assignment** \- see active tickets per agent  
 * **Visual indicators** for agent availability  
 * **One-click assignment** to agents
 
-### **📊 Dashboard Features**
+### ** Dashboard Features**
 
 * **Role-specific views**:  
   * **Users**: See only their own tickets  
@@ -186,7 +186,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ---
 
-## **🛠️ Technology Stack**
+## **Technology Stack**
 
 ### **Backend**
 
@@ -215,7 +215,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 ---
 
-## **🚀 Quick Setup**
+## **Quick Setup**
 
 ### **Prerequisites**
 
@@ -269,7 +269,7 @@ Frontend will start on `http://localhost:3000`
 
 ---
 
-## **📁 Project Structure**
+## **Project Structure**
 
 ticketing-system/  
 ├── backend/  
@@ -301,7 +301,7 @@ ticketing-system/
 
 ---
 
-## **🔑 Default Credentials**
+## **Default Credentials**
 
 For testing purposes, you can create users with different roles:
 
@@ -322,9 +322,9 @@ For testing purposes, you can create users with different roles:
 
 ---
 
-## **🎯 User Roles & Permissions**
+## **User Roles & Permissions**
 
-### **👤 USER (Default)**
+### **USER (Default)**
 
 * ✅ Create tickets  
 * ✅ View own tickets  
@@ -333,7 +333,7 @@ For testing purposes, you can create users with different roles:
 * ❌ Cannot change ticket status  
 * ❌ Cannot access admin features
 
-### **👨‍💼 AGENT**
+### **AGENT**
 
 * ✅ View assigned tickets only  
 * ✅ Update ticket status  
@@ -342,7 +342,7 @@ For testing purposes, you can create users with different roles:
 * ❌ Cannot assign tickets  
 * ❌ Cannot manage users
 
-### **👑 ADMIN**
+### **ADMIN**
 
 * ✅ View all tickets in system  
 * ✅ Assign tickets to agents  
@@ -353,7 +353,7 @@ For testing purposes, you can create users with different roles:
 
 ---
 
-## **🎨 Color Scheme**
+## **Color Scheme**
 
 The application uses a modern, vibrant color palette:
 
@@ -371,7 +371,7 @@ The application uses a modern, vibrant color palette:
 
 ---
 
-## **🔄 Ticket Lifecycle**
+## **Ticket Lifecycle**
 
 1\. USER creates ticket → Status: OPEN  
 2\. ADMIN assigns to AGENT  
@@ -386,7 +386,7 @@ The application uses a modern, vibrant color palette:
 
 ## 
 
-## **📊 Database Schema**
+## **Database Schema**
 
 ### **Users Table**
 
@@ -451,7 +451,7 @@ The application uses a modern, vibrant color palette:
 
 ---
 
-## **🔮 Future Enhancements**
+## **Future Enhancements**
 
 * \[ \] Email notifications for ticket updates  
 * \[ \] File attachment support  
@@ -463,7 +463,7 @@ The application uses a modern, vibrant color palette:
 
 ## 
 
-## **👨‍💻 Author**
+## **Author**
 
 **Your Name**
 
@@ -473,6 +473,6 @@ The application uses a modern, vibrant color palette:
 
 ---
 
-**⭐ If you find this project useful, please give it a star\!**
+**If you find this project useful, please give it a star\!**
 
 
