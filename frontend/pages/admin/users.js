@@ -62,11 +62,8 @@ export default function AdminUsers() {
   };
 
   const toggleRole = (role) => {
-    if (selectedRoles.includes(role)) {
-      setSelectedRoles(selectedRoles.filter((r) => r !== role));
-    } else {
-      setSelectedRoles([...selectedRoles, role]);
-    }
+    // Enforce single selection: always set the selected role to the clicked one
+    setSelectedRoles([role]);
   };
 
   const saveRoles = async () => {
@@ -228,10 +225,10 @@ export default function AdminUsers() {
                             <span
                               key={r}
                               className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${r === "ROLE_ADMIN"
-                                  ? "bg-gradient-to-r from-red-400 to-rose-500 text-white"
-                                  : r === "ROLE_AGENT"
-                                    ? "bg-gradient-to-r from-blue-400 to-cyan-500 text-white"
-                                    : "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
+                                ? "bg-gradient-to-r from-red-400 to-rose-500 text-white"
+                                : r === "ROLE_AGENT"
+                                  ? "bg-gradient-to-r from-blue-400 to-cyan-500 text-white"
+                                  : "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
                                 }`}
                             >
                               {r.replace("ROLE_", "")}
@@ -313,13 +310,13 @@ export default function AdminUsers() {
                 <label
                   key={role}
                   className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${selectedRoles.includes(role)
-                      ? "border-indigo-500 bg-indigo-50"
-                      : "border-gray-100 hover:border-indigo-200 hover:bg-gray-50"
+                    ? "border-indigo-500 bg-indigo-50"
+                    : "border-gray-100 hover:border-indigo-200 hover:bg-gray-50"
                     }`}
                 >
                   <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors ${selectedRoles.includes(role)
-                      ? "border-indigo-500 bg-indigo-500"
-                      : "border-gray-300"
+                    ? "border-indigo-500 bg-indigo-500"
+                    : "border-gray-300"
                     }`}>
                     {selectedRoles.includes(role) && (
                       <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
