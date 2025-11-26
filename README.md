@@ -26,7 +26,7 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 #### **Signup Page**
 
-**![][image2]** 
+![Signup Page](./docs/Signup%20Page.png)
 
 *User-friendly registration form*
 
@@ -36,19 +36,22 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 #### **User View**
 
-**![][image3]** *Users can create and view their own tickets with search and filter capabilities*
+![User View](./docs/User%20View.png)
+ *Users can create and view their own tickets with search and filter capabilities*
 
 #### 
 
 #### **Create Ticket Form**
 
-**![][image4]** *Intuitive ticket creation form with priority and category selection*
+![Create Ticket](./docs/Create%20Ticket%20Form.png)
+ *Intuitive ticket creation form with priority and category selection*
 
 #### 
 
 #### **Ticket Cards**
 
-**![][image5]** *Beautiful ticket cards with color-coded status indicators*
+![Ticket Cards](./docs/Ticket%20Cards.png)
+ *Beautiful ticket cards with color-coded status indicators*
 
 ---
 
@@ -68,11 +71,13 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 #### **Ticket Overview**
 
-**![][image6]** *Comprehensive ticket view with status badges, owner/assignee info, and description*
+![Ticket Overview](./docs/Ticket%20Overview.png)
+*Comprehensive ticket view with status badges, owner/assignee info, and description*
 
 #### **Comments Section**
 
-**![][image7]** *Real-time comment thread for collaboration*
+![Comments Section](./docs/Comments%20Section.png)
+ *Real-time comment thread for collaboration*
 
 ---
 
@@ -80,11 +85,13 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 #### **Agent View**
 
-**![][image8]** *Agents see only tickets assigned to them with status update capabilities*
+![Agent View](./docs/Agent%20View.png)
+ *Agents see only tickets assigned to them with status update capabilities*
 
 #### **Update Ticket Status And Comments**
 
-**![][image9]** *Quick status updates for efficient ticket management*
+![Update Ticket Status](./docs/Update%20Ticket%20Status%20And%20Comments.png)
+ *Quick status updates for efficient ticket management*
 
 ---
 
@@ -94,11 +101,13 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 #### **Admin View \- All Tickets**
 
-**![][image10]** *Complete overview of all tickets in the system*
+![Admin All Tickets](./docs/Admin%20View%20-%20All%20Tickets.png)
+ *Complete overview of all tickets in the system*
 
 #### **Assign Ticket to Agent**
 
-**![][image11]** *Smart agent assignment based on workload*
+![Assign Ticket](./docs/Assign%20Ticket%20to%20Agent.png)
+ *Smart agent assignment based on workload*
 
 #### 
 
@@ -110,11 +119,13 @@ A modern, feature-rich ticketing system built with **Kotlin \+ Spring Boot** bac
 
 #### **User Management**
 
-**![][image12]** *Comprehensive user administration interface*
+![User Management](./docs/User%20Management.png)
+ *Comprehensive user administration interface*
 
 #### **Edit User Roles**
 
-**![][image13]** *Flexible role management system*
+![Edit User Roles](./docs/Edit%20User%20Roles.png)
+ *Flexible role management system*
 
 ---
 
