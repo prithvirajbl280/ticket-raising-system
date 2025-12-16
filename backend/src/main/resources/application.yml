@@ -4,34 +4,33 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     hikari:
-      # 🔧 SUPABASE OPTIMIZATIONS - ULTRA CONSERVATIVE
-      maximum-pool-size: 2        # Very small pool for Supabase free tier
-      minimum-idle: 0              # Start with 0, create on demand
-      connection-timeout: 30000    # 30 seconds to get a connection
-      idle-timeout: 300000         # Close idle connections after 5 minutes
-      max-lifetime: 1200000        # Recycle connections every 20 minutes
-      initialization-fail-timeout: -1  # Don't fail fast, keep retrying
-      leak-detection-threshold: 30000  # Warn if connection held > 30s
-      
-      # Disable prepared statement caching (not compatible with PgBouncer)
+      maximum-pool-size: 2
+      minimum-idle: 0
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      initialization-fail-timeout: -1
+      leak-detection-threshold: 30000
       data-source-properties:
         prepareThreshold: 0
+        cachePrepStmts: false
         prepStmtCacheSize: 0
         prepStmtCacheSqlLimit: 0
-        cachePrepStmts: false
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none   # ✅ FIXED
+    open-in-view: false
     show-sql: false
-    open-in-view: false  # Don't keep connections open in web layer
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        # Critical: Use minimal connections during schema operations
+        temp:
+          use_jdbc_metadata_defaults: false
+        boot:
+          allow_jdbc_metadata_access: false
         hbm2ddl:
           jdbc_metadata_extraction_strategy: individually
-        # Disable query plan cache to reduce memory/connection usage
         query:
           plan_cache_max_size: 2
           plan_parameter_metadata_max_size: 2
@@ -40,17 +39,10 @@ spring:
           time_zone: UTC
         order_inserts: true
         order_updates: true
-        # Important: Don't try to get metadata at startup
-        temp:
-          use_jdbc_metadata_defaults: false
-        # Reduce connection usage during startup
-        connection:
-          provider_disables_autocommit: true
 
 server:
   address: 0.0.0.0
-  port: ${PORT:8080}
-  # Reduce Tomcat thread pool for fewer concurrent connections
+  port: ${PORT}
   tomcat:
     threads:
       max: 10
