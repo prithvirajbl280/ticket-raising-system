@@ -7,10 +7,10 @@ spring:
       maximum-pool-size: 3
       minimum-idle: 1
       connection-timeout: 30000
-      idle-timeout: 600000
+      idle-timeout: 30000
       max-lifetime: 1800000
-      # 🔥 Critical: Disable prepared statement caching for Supabase
       data-source-properties:
+        prepareThreshold: 0
         useServerPrepStmts: false
         cachePrepStmts: false
         prepStmtCacheSize: 0
@@ -23,7 +23,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        # 🔥 Use small cache size instead of 0 to avoid concurrency validation error
         query:
           plan_cache_max_size: 4
           plan_parameter_metadata_max_size: 4
@@ -34,7 +33,3 @@ spring:
 
 server:
   port: ${PORT:8080}
-
-jwt:
-  secret: verySecretJwtKeyReplaceThis
-  expirationMs: 86400000
