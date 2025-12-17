@@ -14,14 +14,8 @@ class TicketController(
     private val ticketService: TicketService
 ) {
 
-    private fun currentEmail(): String {
-        val auth = SecurityContextHolder.getContext().authentication
-        if (auth == null || auth.principal == null) {
-            throw IllegalStateException("No authentication found")
-        }
-        return auth.principal as? String 
-            ?: throw IllegalStateException("Invalid authentication principal")
-    }
+    private fun currentEmail(): String =
+        SecurityContextHolder.getContext().authentication.principal as String
 
     @PostMapping
     fun create(@RequestBody dto: TicketDto): ResponseEntity<Ticket> {
@@ -38,27 +32,26 @@ class TicketController(
 
     @GetMapping
     fun list(
-        @RequestParam(required = false) search: String?,
-        @RequestParam(required = false) status: String?
+        @RequestParam(required = false, defaultValue = "") search: String?,
+        @RequestParam(required = false, defaultValue = "") status: String?
     ): ResponseEntity<List<Ticket>> {
-        return try {
-            val email = currentEmail()
-            println("DEBUG: Fetching tickets for user: $email") // Add logging
-            val tickets = ticketService.searchTickets(email, search, status)
-            println("DEBUG: Found ${tickets.size} tickets") // Add logging
-            ResponseEntity.ok(tickets)
-        } catch (e: Exception) {
-            println("ERROR: Failed to fetch tickets - ${e.message}") // Add logging
-            e.printStackTrace()
-            throw e
-        }
+        println("=== GET /api/tickets ===")
+        println("Search: $search")
+        println("Status: $status")
+        
+        val tickets = ticketService.searchTickets(
+            currentEmail(), 
+            search?.takeIf { it.isNotBlank() }, 
+            status?.takeIf { it.isNotBlank() }
+        )
+        
+        println("Returning ${tickets.size} tickets")
+        return ResponseEntity.ok(tickets)
     }
 
     @GetMapping("/{id}")
     fun get(@PathVariable id: Long): ResponseEntity<Ticket> {
-        return ResponseEntity.ok(
-            ticketService.getTicket(id)
-        )
+        return ResponseEntity.ok(ticketService.getTicket(id))
     }
 
     @PutMapping("/{id}/assign")
