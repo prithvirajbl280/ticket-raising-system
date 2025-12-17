@@ -11,6 +11,8 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
@@ -31,9 +33,11 @@ export default function Dashboard() {
       if (storedUser) {
         const parsed = JSON.parse(storedUser);
         parsed.roles = Array.isArray(parsed.roles) ? parsed.roles : [];
+        console.log("User loaded:", parsed);
         setUser(parsed);
       }
     } catch (err) {
+      console.error("Error loading user:", err);
       localStorage.clear();
       router.push("/");
     }
@@ -55,12 +59,28 @@ export default function Dashboard() {
   };
 
   const fetchTickets = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const url = buildTicketsUrl();
+      console.log("Fetching tickets from:", url);
+      
       const res = await API.get(url);
-      setTickets(res.data || []);
+      console.log("API Response:", res);
+      console.log("Tickets received:", res.data);
+      
+      // Make sure we're setting an array
+      const ticketsData = Array.isArray(res.data) ? res.data : [];
+      console.log("Setting tickets:", ticketsData.length, "tickets");
+      
+      setTickets(ticketsData);
     } catch (e) {
-      console.error(e);
+      console.error("Error fetching tickets:", e);
+      console.error("Error response:", e.response);
+      setError(e.response?.data?.message || e.message || "Failed to fetch tickets");
+      setTickets([]); // Set empty array on error
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,7 +90,7 @@ export default function Dashboard() {
       const res = await API.get("/admin/agents");
       setAgents(res.data || []);
     } catch (e) {
-      console.error(e);
+      console.error("Error fetching agents:", e);
     } finally {
       setLoadingAgents(false);
     }
@@ -110,12 +130,16 @@ export default function Dashboard() {
     e.preventDefault();
     if (!subject.trim() || !description.trim()) return;
 
-    await API.post("/tickets", { subject, description, priority, category });
-    setSubject("");
-    setDescription("");
-    setPriority("MEDIUM");
-    setCategory("OTHER");
-    fetchTickets();
+    try {
+      await API.post("/tickets", { subject, description, priority, category });
+      setSubject("");
+      setDescription("");
+      setPriority("MEDIUM");
+      setCategory("OTHER");
+      fetchTickets();
+    } catch (e) {
+      alert("Failed to create ticket");
+    }
   };
 
   const handleLogout = () => {
@@ -128,7 +152,14 @@ export default function Dashboard() {
   const isAgent = userRoles.includes("ROLE_AGENT");
   const isUserOnly = userRoles.includes("ROLE_USER") && !isAgent && !isAdmin;
 
-  if (!user) return <div className="p-10 text-center">Loading...</div>;
+  if (!user) return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-pink-100">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600 font-medium">Loading...</p>
+      </div>
+    </div>
+  );
 
   const displayPerson = (p) => (p ? p.name || p.email : "Unknown");
 
@@ -274,14 +305,31 @@ export default function Dashboard() {
         </form>
       )}
 
-      {/* TICKETS */}
+      {/* TICKETS SECTION */}
       <h2 className="text-2xl font-bold mb-4">
         {isAdmin ? "All Tickets" : isAgent ? "Assigned Tickets" : "Your Tickets"}
       </h2>
 
-      {tickets.length === 0 ? (
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border-2 border-red-200 text-red-700 p-4 rounded-xl mb-6">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading ? (
+        <div className="bg-white/60 backdrop-blur-xl p-10 rounded-2xl shadow text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading tickets...</p>
+        </div>
+      ) : tickets.length === 0 ? (
         <div className="bg-white/60 backdrop-blur-xl p-10 rounded-2xl shadow text-center text-gray-600">
-          No tickets found.
+          <div className="text-6xl mb-4">🎫</div>
+          <p className="text-xl font-semibold">No tickets found.</p>
+          {isUserOnly && (
+            <p className="text-sm mt-2">Create your first ticket using the form above!</p>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -303,9 +351,7 @@ export default function Dashboard() {
                   }`}
               ></div>
 
-              <div
-                className="text-left text-lg font-semibold mb-3 hover:text-indigo-600"
-              >
+              <div className="text-left text-lg font-semibold mb-3 hover:text-indigo-600">
                 #{t.id} — {t.subject}
               </div>
 
