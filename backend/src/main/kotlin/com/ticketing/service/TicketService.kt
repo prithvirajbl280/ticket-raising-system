@@ -33,50 +33,72 @@ class TicketService(
         ticketRepository.findById(id)
             .orElseThrow { NoSuchElementException("Ticket not found") }
 
-    /**
-     * RBAC RULES
-     * ----------
-     * ADMIN → all tickets
-     * AGENT → assigned tickets
-     * USER  → own tickets
-     */
     fun searchTickets(email: String, query: String?, status: String?): List<Ticket> {
-
+        println("DEBUG: searchTickets called with email=$email, query=$query, status=$status")
+        
         val user = userRepository.findByEmail(email)
-            .orElseThrow { IllegalStateException("Authenticated user not found") }
+            .orElseThrow { 
+                println("ERROR: User not found for email: $email")
+                IllegalStateException("Authenticated user not found") 
+            }
+
+        println("DEBUG: User found - id=${user.id}, email=${user.email}, roles=${user.roles}")
 
         val roles = user.roles ?: emptySet()
+        println("DEBUG: Roles: $roles")
 
         val isAdmin = roles.contains(Role.ROLE_ADMIN)
         val isAgent = roles.contains(Role.ROLE_AGENT)
+        
+        println("DEBUG: isAdmin=$isAdmin, isAgent=$isAgent")
 
         val baseTickets = when {
-            isAdmin -> ticketRepository.findAll()
-            isAgent -> user.id?.let { ticketRepository.findByAssigneeId(it) } ?: emptyList()
-            else -> user.id?.let { ticketRepository.findByOwnerId(it) } ?: emptyList()
+            isAdmin -> {
+                println("DEBUG: Fetching ALL tickets (admin)")
+                ticketRepository.findAll()
+            }
+            isAgent -> {
+                println("DEBUG: Fetching tickets assigned to agent id=${user.id}")
+                ticketRepository.findByAssigneeId(user.id)
+            }
+            else -> {
+                println("DEBUG: Fetching tickets owned by user id=${user.id}")
+                ticketRepository.findByOwnerId(user.id)
+            }
         }
+
+        println("DEBUG: Base tickets fetched: ${baseTickets.size} tickets")
 
         val statusFiltered = status
             ?.takeIf { it.isNotBlank() && it != "ALL" }
             ?.let {
+                println("DEBUG: Filtering by status: $it")
                 runCatching { Status.valueOf(it) }.getOrNull()
             }
             ?.let { desired ->
                 baseTickets.filter { it.status == desired }
             } ?: baseTickets
 
+        println("DEBUG: After status filter: ${statusFiltered.size} tickets")
+
         val searchFiltered = query
             ?.trim()
             ?.takeIf { it.isNotBlank() }
             ?.lowercase()
             ?.let { q ->
+                println("DEBUG: Filtering by search query: $q")
                 statusFiltered.filter {
                     it.subject.contains(q, ignoreCase = true) ||
                     it.description.contains(q, ignoreCase = true)
                 }
             } ?: statusFiltered
 
-        return searchFiltered.distinctBy { it.id }
+        println("DEBUG: After search filter: ${searchFiltered.size} tickets")
+        
+        val result = searchFiltered.distinctBy { it.id }
+        println("DEBUG: Final result: ${result.size} unique tickets")
+        
+        return result
     }
 
     fun assignTicket(ticketId: Long, assigneeId: Long): Ticket {
