@@ -1,5 +1,6 @@
 package com.ticketing.model
 
+import com.fasterxml.jackson.annotation.JsonManagedReference
 import jakarta.persistence.*
 import java.time.Instant
 
@@ -22,14 +23,17 @@ data class Ticket(
     @Enumerated(EnumType.STRING)
     var status: Status = Status.OPEN,
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "owner_id")
     var owner: User? = null,
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "assignee_id")
     var assignee: User? = null,
 
     var createdAt: Instant = Instant.now(),
 
-    @OneToMany(mappedBy = "ticket", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "ticket", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonManagedReference
     var comments: MutableList<Comment> = mutableListOf()
 )
