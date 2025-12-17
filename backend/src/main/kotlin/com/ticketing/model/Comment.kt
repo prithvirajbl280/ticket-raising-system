@@ -1,5 +1,6 @@
 package com.ticketing.model
 
+import com.fasterxml.jackson.annotation.JsonBackReference
 import jakarta.persistence.*
 import java.time.Instant
 
@@ -11,11 +12,13 @@ data class Comment(
     @Column(columnDefinition = "TEXT")
     var text: String = "",
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "author_id")
     var author: User? = null,
 
     @ManyToOne
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @JoinColumn(name = "ticket_id")
+    @JsonBackReference
     var ticket: Ticket? = null,
 
     var createdAt: Instant = Instant.now()
