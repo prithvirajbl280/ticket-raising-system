@@ -14,8 +14,14 @@ class TicketController(
     private val ticketService: TicketService
 ) {
 
-    private fun currentEmail(): String =
-        SecurityContextHolder.getContext().authentication.principal as String
+    private fun currentEmail(): String {
+        val auth = SecurityContextHolder.getContext().authentication
+        if (auth == null || auth.principal == null) {
+            throw IllegalStateException("No authentication found")
+        }
+        return auth.principal as? String 
+            ?: throw IllegalStateException("Invalid authentication principal")
+    }
 
     @PostMapping
     fun create(@RequestBody dto: TicketDto): ResponseEntity<Ticket> {
@@ -35,15 +41,23 @@ class TicketController(
         @RequestParam(required = false) search: String?,
         @RequestParam(required = false) status: String?
     ): ResponseEntity<List<Ticket>> {
-        return ResponseEntity.ok(
-            ticketService.searchTickets(currentEmail(), search, status)
-        )
+        return try {
+            val email = currentEmail()
+            println("DEBUG: Fetching tickets for user: $email") // Add logging
+            val tickets = ticketService.searchTickets(email, search, status)
+            println("DEBUG: Found ${tickets.size} tickets") // Add logging
+            ResponseEntity.ok(tickets)
+        } catch (e: Exception) {
+            println("ERROR: Failed to fetch tickets - ${e.message}") // Add logging
+            e.printStackTrace()
+            throw e
+        }
     }
 
     @GetMapping("/{id}")
     fun get(@PathVariable id: Long): ResponseEntity<Ticket> {
         return ResponseEntity.ok(
-            ticketService.getTicket(id)   // ✅ FIXED
+            ticketService.getTicket(id)
         )
     }
 
